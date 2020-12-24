@@ -1,0 +1,23 @@
+subdirs(
+  	00_create_image_without_vma
+  	00_create_buffer_without_vma
+  	00_create_sampler
+  	01_get_instance
+  	02_list_devices
+  	03_select_device
+  	04_create_surface
+  	05_create_logical_device
+  	06_create_swapchain
+  	07_create_descriptor_set
+  	08_create_render_pass
+  	09_create_frame_buffer
+  	10_create_shader_module
+  	11_create_pipeline
+  	12_create_vertex_buffer
+  	13_create_semaphore
+  	14_create_command_buffer
+  	15_draw
+  	16_device_group
+  	17_timeline_semaphore
+)
+
