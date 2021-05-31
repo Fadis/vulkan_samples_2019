@@ -181,8 +181,10 @@ int main( int argc, const char *argv[] ) {
   auto raw_pipeline = context.device->createComputePipeline(
     *context.pipeline_cache, pipeline_create_info
   );
+  if( raw_pipeline.result != vk::Result::eSuccess )
+    vk::throwResultException( raw_pipeline.result, "createComputePipeline failed" );
   vk::ObjectDestroy< vk::Device, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > deleter( *context.device, nullptr, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE () );
-  auto pipeline = vk::UniqueHandle< vk::Pipeline, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE >( raw_pipeline, deleter );
+  auto pipeline = vk::UniqueHandle< vk::Pipeline, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE >( raw_pipeline.value, deleter );
 
   context.device->updateDescriptorSets(
     std::vector< vk::WriteDescriptorSet >{
@@ -282,12 +284,14 @@ int main( int argc, const char *argv[] ) {
   }
   ++current_semaphore_value;
   ++next_semaphore_value;
-  context.device->waitSemaphores(
+  auto result = context.device->waitSemaphores(
     vk::SemaphoreWaitInfo()
       .setSemaphoreCount( 1 )
       .setPSemaphores( &*semaphore )
       .setPValues( &current_semaphore_value ),
     UINT64_MAX
   );
+  if( result != vk::Result::eSuccess )
+    vk::throwResultException( result, "waitSemaphores failed" );
 }
 

@@ -192,8 +192,12 @@ int main( int argc, const char *argv[] ) {
       );
       const auto begin_time = std::chrono::high_resolution_clock::now();
       auto &fe = fence[ current_frame ];
-      context.device->waitForFences( 1, &*fe.fence, VK_TRUE, UINT64_MAX );
-      context.device->resetFences( 1, &*fe.fence );
+      auto wait_for_fences_result = context.device->waitForFences( 1, &*fe.fence, VK_TRUE, UINT64_MAX );
+      if( wait_for_fences_result != vk::Result::eSuccess )
+        vk::throwResultException( wait_for_fences_result, "waitForFences failed" );
+      auto reset_fences_result = context.device->resetFences( 1, &*fe.fence );
+      if( reset_fences_result != vk::Result::eSuccess )
+        vk::throwResultException( reset_fences_result, "waitForFences failed" );
       auto &gcb = command_buffer[ current_frame ];
       gcb->reset( vk::CommandBufferResetFlags( 0 ) );
       auto image_index = context.device->acquireNextImageKHR( *context.swapchain, UINT64_MAX, *fe.image_acquired_semaphore, vk::Fence() );
@@ -245,7 +249,9 @@ int main( int argc, const char *argv[] ) {
         .setSwapchainCount( 1 )
         .setPSwapchains( &*context.swapchain )
         .setPImageIndices( &image_index.value );
-      present_queue.presentKHR( &present_info );
+      auto present_result = present_queue.presentKHR( &present_info );
+      if( present_result != vk::Result::eSuccess )
+        vk::throwResultException( present_result, "presentKHR failed" );
       glfwPollEvents();
       ++current_frame;
       current_frame %= framebuffer.size();
