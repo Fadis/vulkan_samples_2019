@@ -25,6 +25,7 @@
 #include <vector>
 #include <vulkan/vulkan.hpp>
 #include <OpenImageIO/imageio.h>
+#include <OpenImageIO/version.h>
 #include <vw/image.h>
 #include <vw/buffer.h>
 #include <vw/command_buffer.h>
@@ -105,10 +106,14 @@ namespace vw {
     bool srgb
   ) {
     using namespace OIIO_NAMESPACE;
+#if OIIO_VERSION_MAJOR >= 2 
+    auto texture_file = ImageInput::open( filename );
+#else
     std::shared_ptr< ImageInput > texture_file(
       ImageInput::open( filename ),
       []( auto p ) { if( p ) ImageInput::destroy( p ); }
     );
+#endif
     if( !texture_file ) throw unable_to_load_texture();
     const ImageSpec &spec = texture_file->spec();
     uint32_t mipmap_count = 1u;
