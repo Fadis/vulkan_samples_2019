@@ -36,6 +36,7 @@ namespace viewer {
         ( "no", shader_flag_t::normal )
         ( "oc", shader_flag_t::occlusion )
         ( "em", shader_flag_t::emissive )
+        ( "sh", shader_flag_t::shadow )
         ( "tangent", shader_flag_t::tangent )
         ( "world", shader_flag_t( 0 ) );
       targets.add

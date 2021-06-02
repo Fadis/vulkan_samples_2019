@@ -69,3 +69,21 @@ vec3 light(
   return linear;
 }
 
+vec3 light_with_mask(
+  vec3 L,
+  vec3 V,
+  vec3 N,
+  vec3 diffuse_color,
+  float roughness,
+  float metallicness,
+  float ambient,
+  vec3 emissive,
+  float light_energy,
+  float masked
+) {
+  const float pi = 3.141592653589793;
+  vec3 specular = walter( L, V, N, roughness, mix( vec3( 0.04, 0.04, 0.04 ), diffuse_color, metallicness ) );
+  float diffuse = max( dot( L, N ), 0 ) /pi * burley( L, V, N, roughness );
+  vec3 linear = mix( ( max( dot( L, N ), 0 ) * ( max( specular, vec3( 0, 0, 0 ) ) + ( 1 - metallicness ) * diffuse * diffuse_color ) + ambient * diffuse_color ) * light_energy + emissive, ( ambient * diffuse_color ) * light_energy + emissive, masked );
+  return linear;
+}

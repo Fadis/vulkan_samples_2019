@@ -58,7 +58,7 @@ namespace viewer {
     LIBSTAMP_SETTER( min )
     LIBSTAMP_SETTER( max )
     LIBSTAMP_SETTER( uniform_buffer )
-    vw::pipeline_t pipeline;
+    std::vector< vw::pipeline_t > pipeline;
     std::unordered_map< uint32_t, buffer_view_t > vertex_buffer;
     bool indexed;
     buffer_view_t index_buffer;
@@ -85,17 +85,39 @@ namespace viewer {
   };
   struct push_constants_t {
     LIBSTAMP_SETTER( world_matrix )
+    LIBSTAMP_SETTER( fid )
+    glm::mat4 world_matrix;
+    int32_t fid;
+  };
+  struct dynamic_uniforms_t {
     LIBSTAMP_SETTER( projection_matrix )
     LIBSTAMP_SETTER( camera_matrix )
+    LIBSTAMP_SETTER( light_vp_matrix0 )
+    LIBSTAMP_SETTER( light_vp_matrix1 )
+    LIBSTAMP_SETTER( light_vp_matrix2 )
+    LIBSTAMP_SETTER( light_vp_matrix3 )
     LIBSTAMP_SETTER( eye_pos )
     LIBSTAMP_SETTER( light_pos )
     LIBSTAMP_SETTER( light_energy )
-    glm::mat4 world_matrix;
+    LIBSTAMP_SETTER( light_z )
+    LIBSTAMP_SETTER( light_frustum_width )
+    LIBSTAMP_SETTER( light_size )
+    LIBSTAMP_SETTER( split_bias )
+    LIBSTAMP_SETTER( shadow_mode )
     glm::mat4 projection_matrix;
     glm::mat4 camera_matrix;
+    glm::mat4 light_vp_matrix0;
+    glm::mat4 light_vp_matrix1;
+    glm::mat4 light_vp_matrix2;
+    glm::mat4 light_vp_matrix3;
     glm::vec4 eye_pos;
     glm::vec4 light_pos;
     float light_energy;
+    float light_frustum_width;
+    float light_size;
+    float split_bias;
+    uint32_t shadow_mode;
+    std::array< float, 5u > light_z;
   };
   struct mesh_t {
     LIBSTAMP_SETTER( primitive )
@@ -110,22 +132,26 @@ namespace viewer {
     const fx::gltf::Document &doc,
     int32_t index,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > >&,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   );
   meshes_t create_mesh(
     const fx::gltf::Document &doc,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > >&,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   );
 }
 #endif

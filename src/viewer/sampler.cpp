@@ -91,4 +91,28 @@ namespace viewer {
     );
     return sampler_;
   }
+  sampler_t create_nomip_sampler(
+    const vw::context_t &context
+  ) {
+    sampler_t sampler_;
+    sampler_.set_sampler(
+      context.device->createSamplerUnique(
+        vk::SamplerCreateInfo()
+          .setMagFilter( vw::to_vulkan_mag_filter( fx::gltf::Sampler::MagFilter::Linear ) )
+          .setMinFilter( vw::to_vulkan_min_filter( fx::gltf::Sampler::MinFilter::LinearMipMapLinear ) )
+          .setMipmapMode( vw::to_vulkan_mipmap_mode( fx::gltf::Sampler::MinFilter::LinearMipMapLinear ) )
+          .setAddressModeU( vw::to_vulkan_address_mode( fx::gltf::Sampler::WrappingMode::Repeat ) )
+          .setAddressModeV( vw::to_vulkan_address_mode( fx::gltf::Sampler::WrappingMode::Repeat ) )
+          .setAddressModeW( vw::to_vulkan_address_mode( fx::gltf::Sampler::WrappingMode::Repeat ) )
+          .setAnisotropyEnable( false )
+          .setCompareEnable( false )
+          .setMipLodBias( 0.f )
+          .setMinLod( 0.f )
+          .setMaxLod( 0.f )
+          .setBorderColor( vk::BorderColor::eFloatTransparentBlack )
+          .setUnnormalizedCoordinates( false )
+      )
+    );
+    return sampler_;
+  }
 }

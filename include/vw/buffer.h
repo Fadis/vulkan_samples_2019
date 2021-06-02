@@ -25,10 +25,13 @@
 #include <string>
 #include <vulkan/vulkan.hpp>
 #include <vw/context.h>
+#include <vw/exceptions.h>
 namespace vw {
   struct buffer_t {
     LIBSTAMP_SETTER( buffer )
     LIBSTAMP_SETTER( allocation )
+    LIBSTAMP_SETTER( size )
+    size_t size;
     std::shared_ptr< vk::Buffer > buffer;
     std::shared_ptr< VmaAllocation > allocation;
   };
@@ -36,6 +39,10 @@ namespace vw {
     const context_t &context,
     const vk::BufferCreateInfo &buffer_create_info,
     VmaMemoryUsage usage
+  );
+  void barrier_buffer(
+    const vk::CommandBuffer &commands,
+    const buffer_t &buffer
   );
   buffer_t load_buffer(
     const context_t &context,
@@ -47,6 +54,42 @@ namespace vw {
     const std::string &filename,
     vk::BufferUsageFlags usage
   );
+  buffer_t create_staging_buffer(
+    const context_t &context,
+    size_t size
+  );
+  buffer_t create_uniform_buffer(
+    const context_t &context,
+    size_t size
+  );
+  void transfer_buffer_internal(
+    vk::UniqueHandle< vk::CommandBuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > &commands,
+    buffer_t &temporary,
+    buffer_t &destination
+  );
+  template< typename Iterator >
+  void transfer_buffer(
+    const context_t &context,
+    vk::UniqueHandle< vk::CommandBuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > &commands,
+    Iterator begin, Iterator end,
+    buffer_t &temporary,
+    buffer_t &destination
+  ) {
+    if( temporary.size != uint32_t( std::distance( begin, end ) ) ) throw invalid_argument( "dataとtemporaryのサイズが合わない" );
+    {
+      void* mapped_memory;
+      const auto result = vmaMapMemory( *context.allocator, *temporary.allocation, &mapped_memory );
+      if( result != VK_SUCCESS ) vk::throwResultException( vk::Result( result ), "バッファをマップできない" );
+      std::shared_ptr< uint8_t > mapped(
+        reinterpret_cast< uint8_t* >( mapped_memory ),
+        [allocator=context.allocator,allocation=temporary.allocation]( uint8_t *p ) {
+          if( p ) vmaUnmapMemory( *allocator, *allocation );
+        }
+      );
+      std::copy( begin, end, mapped.get() );
+    }
+    transfer_buffer_internal( commands, temporary, destination );
+  }
 }
 #endif
 

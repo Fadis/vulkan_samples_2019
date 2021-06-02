@@ -25,7 +25,7 @@
 #include <stamp/setter.h>
 namespace vw {
   struct configs_t {
-    configs_t() : list( false ), device_index( 0 ), width( 0 ), height( 0 ), fullscreen( false ), validation( false ), direct( false ), purple( false ), shader_mask( 0 ) {}
+    configs_t() : list( false ), device_index( 0 ), width( 0 ), height( 0 ), fullscreen( false ), validation( false ), direct( false ), purple( false ), light( false ), shader_mask( 0 ) {}
     LIBSTAMP_SETTER( prog_name )
     LIBSTAMP_SETTER( list )
     LIBSTAMP_SETTER( device_index )
@@ -37,6 +37,7 @@ namespace vw {
     LIBSTAMP_SETTER( direct )
     LIBSTAMP_SETTER( input )
     LIBSTAMP_SETTER( purple )
+    LIBSTAMP_SETTER( light )
     LIBSTAMP_SETTER( shader )
     LIBSTAMP_SETTER( shader_mask )
     std::string prog_name; 
@@ -50,6 +51,7 @@ namespace vw {
     bool direct;
     std::string input;
     bool purple;
+    bool light;
     std::string shader;
     int shader_mask;
   };

@@ -28,32 +28,45 @@
 #include <vw/image.h>
 namespace vw {
   struct framebuffer_t {
+    framebuffer_t() : width( 0 ), height( 0 ) {}
+    LIBSTAMP_SETTER( color_image )
     LIBSTAMP_SETTER( swapchain_image_view )
     LIBSTAMP_SETTER( depth_image )
     LIBSTAMP_SETTER( depth_image_view )
     LIBSTAMP_SETTER( framebuffer )
+    LIBSTAMP_SETTER( width )
+    LIBSTAMP_SETTER( height )
+    image_t color_image;
     vk::UniqueHandle< vk::ImageView, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > swapchain_image_view;
     image_t depth_image;
     vk::UniqueHandle< vk::ImageView, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > depth_image_view;
     vk::UniqueHandle< vk::Framebuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > framebuffer;
+    uint32_t width;
+    uint32_t height;
   };
   struct framebuffer_fence_t {
     LIBSTAMP_SETTER( fence )
     LIBSTAMP_SETTER( image_acquired_semaphore )
     LIBSTAMP_SETTER( draw_complete_semaphore )
     LIBSTAMP_SETTER( image_ownership_semaphore )
-    vk::UniqueHandle< vk::Fence, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > fence;
+    std::vector< vk::UniqueHandle< vk::Fence, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > > fence;
     vk::UniqueHandle< vk::Semaphore, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > image_acquired_semaphore;
-    vk::UniqueHandle< vk::Semaphore, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > draw_complete_semaphore;
+    std::vector< vk::UniqueHandle< vk::Semaphore, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > > draw_complete_semaphore;
     vk::UniqueHandle< vk::Semaphore, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > image_ownership_semaphore;
   };
   std::vector< framebuffer_t > create_framebuffer(
     const context_t &context,
     const render_pass_t &render_pass
   );
+  std::vector< framebuffer_t > create_framebuffer(
+    const context_t &context,
+    const render_pass_t &render_pass,
+    uint32_t width, uint32_t height, bool enable_mip = false
+  );
   std::vector< framebuffer_fence_t > create_framebuffer_fences(
     const context_t &context,
-    uint32_t image_count
+    uint32_t image_count,
+    uint32_t framebuffer_count
   );
 }
 #endif

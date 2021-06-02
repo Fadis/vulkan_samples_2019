@@ -23,6 +23,7 @@
 #include <fstream>
 #include <vw/buffer.h>
 #include <vw/command_buffer.h>
+#include <vw/exceptions.h>
 namespace vw {
   buffer_t get_buffer(
     const context_t &context,
@@ -47,7 +48,69 @@ namespace vw {
         }
       }
     );
+    buffer.set_size( buffer_create_info.size );
     return buffer;
+  }
+  void barrier_buffer(
+    const vk::CommandBuffer &commands,
+    const buffer_t &buffer
+  ) {
+    commands.pipelineBarrier(
+      vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eFragmentShader|vk::PipelineStageFlagBits::eVertexShader,
+      vk::DependencyFlagBits( 0 ),
+      {},
+      {
+        vk::BufferMemoryBarrier()
+          .setSrcAccessMask( vk::AccessFlagBits::eTransferRead )
+          .setDstAccessMask( vk::AccessFlagBits::eShaderRead )
+          .setBuffer( *buffer.buffer )
+          .setOffset( 0u )
+          .setSize( buffer.size )
+      },
+      {}
+    );
+  }
+  buffer_t create_staging_buffer(
+    const context_t &context,
+    size_t size
+  ) {
+    return get_buffer(
+      context,
+      vk::BufferCreateInfo()
+        .setSize( size )
+        .setUsage( vk::BufferUsageFlagBits::eTransferSrc ),
+      VMA_MEMORY_USAGE_CPU_TO_GPU
+    );
+  }
+  buffer_t create_uniform_buffer(
+    const context_t &context,
+    size_t size
+  ) {
+    return get_buffer(
+      context,
+      vk::BufferCreateInfo()
+        .setSize( size )
+        .setUsage( vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eUniformBuffer ),
+      VMA_MEMORY_USAGE_CPU_TO_GPU
+    );
+  }
+  void transfer_buffer_internal(
+    vk::UniqueHandle< vk::CommandBuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > &commands,
+    buffer_t &temporary,
+    buffer_t &destination
+  ) {
+    if( destination.size != temporary.size ) throw invalid_argument( "destinationとtemporaryのサイズが合わない" );
+    commands->copyBuffer(
+      *temporary.buffer,
+      *destination.buffer,
+      {
+        vk::BufferCopy()
+          .setSrcOffset( 0 )
+          .setDstOffset( 0 )
+          .setSize( destination.size )
+      }
+    );
   }
   buffer_t load_buffer(
     const context_t &context,
@@ -61,13 +124,7 @@ namespace vw {
         .setUsage( usage | vk::BufferUsageFlagBits::eTransferDst ),
       VMA_MEMORY_USAGE_GPU_ONLY
     );
-    auto temporary = get_buffer(
-      context,
-      vk::BufferCreateInfo()
-        .setSize( data.size() )
-        .setUsage( vk::BufferUsageFlagBits::eTransferSrc ),
-      VMA_MEMORY_USAGE_CPU_TO_GPU
-    );
+    auto temporary = create_staging_buffer( context, data.size() );
     {
       void* mapped_memory;
       const auto result = vmaMapMemory( *context.allocator, *temporary.allocation, &mapped_memory );
@@ -85,16 +142,7 @@ namespace vw {
       vk::CommandBufferBeginInfo()
         .setFlags( vk::CommandBufferUsageFlagBits::eOneTimeSubmit )
     );
-    commands->copyBuffer(
-      *temporary.buffer,
-      *final_buffer.buffer,
-      {
-        vk::BufferCopy()
-          .setSrcOffset( 0 )
-          .setDstOffset( 0 )
-          .setSize( data.size() )
-      }
-    );
+    transfer_buffer_internal( commands, temporary, final_buffer );
     commands->end();
     auto graphics_queue = context.device->getQueue( context.graphics_queue_index, 0 );
     graphics_queue.submit(

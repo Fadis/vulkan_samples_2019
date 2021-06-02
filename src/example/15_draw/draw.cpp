@@ -73,7 +73,8 @@ int main( int argc, const char *argv[] ) {
     {
       VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME,
       VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-      VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME
+      VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME,
+      VK_KHR_MAINTENANCE1_EXTENSION_NAME
     }, {}
   ) ) {
     std::cout << "指定された条件に合うデバイスは無かった" << std::endl;
@@ -86,7 +87,8 @@ int main( int argc, const char *argv[] ) {
       {
         VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME,
+        VK_KHR_MAINTENANCE1_EXTENSION_NAME
       },
       {},
       {
@@ -129,23 +131,44 @@ int main( int argc, const char *argv[] ) {
           .setDescriptorCount( 1 )
           .setBinding( 5 )
           .setStageFlags( vk::ShaderStageFlagBits::eFragment )
-          .setPImmutableSamplers( nullptr )
+          .setPImmutableSamplers( nullptr ),
+        vk::DescriptorSetLayoutBinding() // dynamic uniform
+          .setDescriptorType( vk::DescriptorType::eUniformBuffer )
+          .setDescriptorCount( 1 )
+          .setBinding( 7 )
+          .setStageFlags( vk::ShaderStageFlagBits::eVertex|vk::ShaderStageFlagBits::eFragment )
+          .setPImmutableSamplers( nullptr ),
       }
     );
-    auto render_pass = vw::create_render_pass( context );
+    std::vector< vw::render_pass_t > render_pass;
+    render_pass.emplace_back( vw::create_render_pass( context ) );
     auto framebuffer = vw::create_framebuffer(
-      context, render_pass
+      context, render_pass[ 0 ]
     );
     auto fence = vw::create_framebuffer_fences(
-      context, framebuffer.size()
+      context, framebuffer.size(), 1u
     );
+    std::vector< std::vector< viewer::texture_t > > extra_textures;
+    std::vector< viewer::buffer_t > dynamic_uniform_buffer;
+    for( size_t i = 0u; i != framebuffer.size(); ++i )
+      dynamic_uniform_buffer.emplace_back(
+        viewer::create_uniform_buffer( context, sizeof( viewer::dynamic_uniforms_t ) )
+      );
+    std::vector< viewer::buffer_t > temporary_dynamic_uniform_buffer;
+    for( size_t i = 0u; i != framebuffer.size(); ++i )
+      temporary_dynamic_uniform_buffer.emplace_back(
+        viewer::create_staging_buffer( context, sizeof( viewer::dynamic_uniforms_t ) )
+      );
     viewer::document_t document = viewer::load_gltf(
       context,
       render_pass,
       std::filesystem::path( config.input ),
       framebuffer.size(),
       config.shader,
-      config.shader_mask
+      config.shader_mask,
+      extra_textures,
+      dynamic_uniform_buffer,
+      float( context.width )/float( context.height )
     );
     auto center = ( document.node.min + document.node.max ) / 2.f;
     auto scale = std::abs( glm::length( document.node.max - document.node.min ) );
@@ -160,17 +183,27 @@ int main( int argc, const char *argv[] ) {
     auto const viewport =
       vk::Viewport()
         .setWidth( context.width )
-        .setHeight( context.height )
+        .setHeight( int( context.height ) )
         .setMinDepth( 0.0f )
         .setMaxDepth( 1.0f );
     vk::Rect2D const scissor( vk::Offset2D(0, 0), vk::Extent2D( context.width, context.height ) );
     std::cout << scale << std::endl;
-    const glm::mat4 projection = glm::perspective( 30.f, (float(context.width)/float(context.height)), std::min(0.1f*scale,0.5f), 150.f*scale );
+    auto lhrh = glm::mat4(-1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1);
+    const glm::mat4 projection = lhrh * glm::perspective( 0.39959648408210363f, (float(context.width)/float(context.height)), std::min(0.1f*scale,0.5f), 150.f*scale );
     auto camera_pos = center + glm::vec3{ 0.f, 0.f, 1.0f*scale };
     float camera_angle = 0;//M_PI;
     auto speed = 0.01f*scale;
     auto light_pos = glm::vec3{ 0.0f*scale, 1.2f*scale, 0.0f*scale };
-    float light_energy = 1.0f;
+    float light_energy = 5.0f;
+    const auto point_lights = viewer::get_point_lights(
+      document.node,
+      document.point_light
+    );
+    if( !point_lights.empty() ) {
+      light_energy = point_lights[ 0 ].intensity / ( 4 * M_PI ) / 100;
+      light_pos = point_lights[ 0 ].location;
+      std::cout << light_energy << " " << light_pos[ 0 ] << " " << light_pos[ 1 ] << " " << light_pos[ 2 ] << std::endl;
+    }
     while( !context.input_state->quit ) {
       if( context.input_state->a ) camera_angle += 0.01 * M_PI/2;
       if( context.input_state->d ) camera_angle -= 0.01 * M_PI/2;
@@ -179,8 +212,8 @@ int main( int argc, const char *argv[] ) {
       if( context.input_state->s ) camera_pos -= camera_direction * glm::vec3( speed );
       if( context.input_state->e ) camera_pos[ 1 ] += speed;
       if( context.input_state->c ) camera_pos[ 1 ] -= speed;
-      if( context.input_state->j ) light_energy += 0.01f;
-      if( context.input_state->k ) light_energy -= 0.01f;
+      if( context.input_state->j ) light_energy += 0.05f;
+      if( context.input_state->k ) light_energy -= 0.05f;
       if( context.input_state->up ) light_pos[ 2 ] += speed;
       if( context.input_state->down ) light_pos[ 2 ] -= speed;
       if( context.input_state->left ) light_pos[ 0 ] -= speed;
@@ -192,10 +225,10 @@ int main( int argc, const char *argv[] ) {
       );
       const auto begin_time = std::chrono::high_resolution_clock::now();
       auto &fe = fence[ current_frame ];
-      auto wait_for_fences_result = context.device->waitForFences( 1, &*fe.fence, VK_TRUE, UINT64_MAX );
+      auto wait_for_fences_result = context.device->waitForFences( 1, &*fe.fence[ 0 ], VK_TRUE, UINT64_MAX );
       if( wait_for_fences_result != vk::Result::eSuccess )
         vk::throwResultException( wait_for_fences_result, "waitForFences failed" );
-      auto reset_fences_result = context.device->resetFences( 1, &*fe.fence );
+      auto reset_fences_result = context.device->resetFences( 1, &*fe.fence[ 0 ] );
       if( reset_fences_result != vk::Result::eSuccess )
         vk::throwResultException( reset_fences_result, "waitForFences failed" );
       auto &gcb = command_buffer[ current_frame ];
@@ -207,8 +240,23 @@ int main( int argc, const char *argv[] ) {
         vk::CommandBufferBeginInfo()
           .setFlags( vk::CommandBufferUsageFlagBits::eOneTimeSubmit )
       );
+      auto dynamic_uniform = viewer::dynamic_uniforms_t()
+        .set_projection_matrix( projection )
+        .set_camera_matrix( lookat )
+        .set_eye_pos( glm::vec4( camera_pos, 1.0 ) )
+        .set_light_pos( glm::vec4( light_pos, 1.0 ) )
+        .set_light_energy( light_energy );
+      vw::transfer_buffer(
+        context, 
+        gcb,
+        reinterpret_cast< uint8_t* >( &dynamic_uniform ),
+        reinterpret_cast< uint8_t* >( &dynamic_uniform ) + sizeof( viewer::dynamic_uniforms_t ),
+        temporary_dynamic_uniform_buffer[ current_frame ].buffer,
+        dynamic_uniform_buffer[ current_frame ].buffer
+      );
+      vw::barrier_buffer( *gcb, dynamic_uniform_buffer[ current_frame ].buffer );
       auto const pass_info = vk::RenderPassBeginInfo()
-        .setRenderPass( *render_pass.render_pass )
+        .setRenderPass( *render_pass[ 0 ].render_pass )
         .setFramebuffer( *fb.framebuffer )
         .setRenderArea( vk::Rect2D( vk::Offset2D(0, 0), vk::Extent2D((uint32_t)context.width, (uint32_t)context.height) ) )
         .setClearValueCount( clear_values.size() )
@@ -223,11 +271,7 @@ int main( int argc, const char *argv[] ) {
         document.mesh,
         document.buffer,
         current_frame,
-        projection,
-        lookat,
-        camera_pos,
-        light_pos,
-        light_energy
+        0u
       );
       gcb->endRenderPass();
       gcb->end();
@@ -240,12 +284,12 @@ int main( int argc, const char *argv[] ) {
         .setWaitSemaphoreCount( 1 )
         .setPWaitSemaphores( &*fe.image_acquired_semaphore )
         .setSignalSemaphoreCount( 1 )
-        .setPSignalSemaphores( &*fe.draw_complete_semaphore ),
-        *fe.fence
+        .setPSignalSemaphores( &*fe.draw_complete_semaphore[ 0 ] ),
+        *fe.fence[ 0 ]
       );
       auto const present_info = vk::PresentInfoKHR()
         .setWaitSemaphoreCount( 1 )
-        .setPWaitSemaphores( &*fe.draw_complete_semaphore )
+        .setPWaitSemaphores( &*fe.draw_complete_semaphore[ 0 ] )
         .setSwapchainCount( 1 )
         .setPSwapchains( &*context.swapchain )
         .setPImageIndices( &image_index.value );

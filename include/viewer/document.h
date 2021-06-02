@@ -27,6 +27,8 @@
 #include <vw/context.h>
 #include <vw/render_pass.h>
 #include <viewer/mesh.h>
+#include <viewer/light.h>
+#include <viewer/camera.h>
 #include <viewer/buffer.h>
 #include <viewer/sampler.h>
 #include <viewer/image.h>
@@ -37,6 +39,8 @@ namespace viewer {
   struct document_t {
     LIBSTAMP_SETTER( shader )
     LIBSTAMP_SETTER( mesh )
+    LIBSTAMP_SETTER( point_light )
+    LIBSTAMP_SETTER( camera )
     LIBSTAMP_SETTER( buffer )
     LIBSTAMP_SETTER( sampler )
     LIBSTAMP_SETTER( default_sampler )
@@ -45,6 +49,8 @@ namespace viewer {
     LIBSTAMP_SETTER( node )
     shader_t shader;
     meshes_t mesh;
+    point_lights_t point_light;
+    cameras_t camera;
     buffers_t buffer;
     samplers_t sampler;
     sampler_t default_sampler;
@@ -54,11 +60,14 @@ namespace viewer {
   };
   document_t load_gltf(
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     std::filesystem::path path,
     uint32_t swapchain_size,
     const std::filesystem::path &shader_dir,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > >&,
+    const std::vector< buffer_t > &dynamic_uniform_buffer,
+    float aspect_ratio
   );
 }
 #endif

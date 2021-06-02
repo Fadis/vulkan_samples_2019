@@ -27,6 +27,7 @@ namespace vw {
   LIBSTAMP_EXCEPTION( runtime_error, unable_to_load_texture, "テクスチャを読み込む事ができない" )
   LIBSTAMP_EXCEPTION( runtime_error, unable_to_load_shader, "シェーダを読み込む事ができない" )
   LIBSTAMP_EXCEPTION( runtime_error, invalid_gltf, "不正なGLTF" )
+  LIBSTAMP_EXCEPTION( runtime_error, invalid_argument, "不正な引数" )
 }
 
 #endif

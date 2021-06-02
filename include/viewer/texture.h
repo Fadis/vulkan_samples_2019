@@ -44,6 +44,17 @@ namespace viewer {
     const samplers_t &samplers,
     const sampler_t &default_samplers
   );
+  texture_t create_texture(
+    int32_t index,
+    const vw::context_t &context,
+    const image_t &image,
+    const samplers_t &samplers,
+    const sampler_t &default_samplers
+  );
+  texture_t create_texture(
+    const vw::image_t &image,
+    const sampler_t &sampler
+  );
   textures_t create_texture(
     const fx::gltf::Document &doc,
     const vw::context_t &context,

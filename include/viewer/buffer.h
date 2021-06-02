@@ -33,6 +33,14 @@ namespace viewer {
   };
   buffer_t create_uniform_buffer(
     const vw::context_t &context,
+    size_t size
+  );
+  buffer_t create_staging_buffer(
+    const vw::context_t &context,
+    size_t size
+  );
+  buffer_t create_uniform_buffer(
+    const vw::context_t &context,
     const std::vector< uint8_t > &data
   );
   using buffers_t = std::vector< buffer_t >;

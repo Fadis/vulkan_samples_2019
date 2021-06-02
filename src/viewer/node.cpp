@@ -78,6 +78,32 @@ namespace viewer {
     }
     else
       node_.set_has_mesh( false );
+    if( !node.extensionsAndExtras.is_null() ) {
+      if( node.extensionsAndExtras.find( "extensions" ) != node.extensionsAndExtras.end() ) {
+        auto &ext = node.extensionsAndExtras[ "extensions" ];
+        if( ext.find( "KHR_lights_punctual" ) != ext.end() ) {
+          auto &light = ext[ "KHR_lights_punctual" ];
+          if( light.find( "light" ) != light.end() ) {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+            node_.set_light( int( light[ "light" ] ) );
+            node_.set_has_light( true );
+          }
+          else
+            node_.set_has_light( false );
+        }
+        else
+          node_.set_has_light( false );
+      }
+      else
+        node_.set_has_light( false );
+    }
+    else
+      node_.set_has_light( false );
+    if( node.camera != -1 ) {
+      node_.set_camera( node.camera );
+      node_.set_has_camera( true );
+    }
+    else node_.set_has_camera( false );
     for( const auto c: node.children ) {
       node_.children.push_back(
         create_node( doc, c, context, node_.matrix, meshes )
@@ -102,7 +128,7 @@ namespace viewer {
     if( index < 0 || doc.scenes.size() <= size_t( index ) ) throw vw::invalid_gltf( "参照されたsceneが存在しない", __FILE__, __LINE__ );
     const auto &scene = doc.scenes[ index ];
     node_t root;
-    root.set_matrix( glm::mat4(1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1) );
+    root.set_matrix( glm::mat4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1) );
     glm::vec3 min(
       std::numeric_limits< float >::max(),
       std::numeric_limits< float >::max(),
@@ -135,26 +161,18 @@ namespace viewer {
     const meshes_t &meshes,
     const buffers_t &buffers,
     uint32_t current_frame,
-    const glm::mat4 &projection,
-    const glm::mat4 &lookat,
-    const glm::vec3 &camera_pos,
-    const glm::vec3 &light_pos,
-    float light_energy
+    uint32_t pipeline_index
   ) {
     for( const auto &n: node.children )
-      draw_node( context, commands, n, meshes, buffers, current_frame, projection, lookat, camera_pos, light_pos, light_energy );
+      draw_node( context, commands, n, meshes, buffers, current_frame, pipeline_index );
     if( node.has_mesh ) {
       const auto &mesh = meshes[ node.mesh ];
       for( const auto &primitive: mesh.primitive ) {
-        commands.bindPipeline( vk::PipelineBindPoint::eGraphics, *primitive.pipeline.pipeline );
+        commands.bindPipeline( vk::PipelineBindPoint::eGraphics, *primitive.pipeline[ pipeline_index ].pipeline );
         auto pc = push_constants_t()
           .set_world_matrix( node.matrix )
-          .set_projection_matrix( projection )
-          .set_camera_matrix( lookat )
-          .set_eye_pos( glm::vec4( camera_pos, 1.0 ) )
-          .set_light_pos( glm::vec4( light_pos, 1.0 ) )
-          .set_light_energy( light_energy );
-        commands.pushConstants( *primitive.pipeline.pipeline_layout, vk::ShaderStageFlagBits::eVertex|vk::ShaderStageFlagBits::eFragment, 0, sizeof( push_constants_t ), &pc );
+          .set_fid( pipeline_index );
+        commands.pushConstants( *primitive.pipeline[ pipeline_index ].pipeline_layout, vk::ShaderStageFlagBits::eVertex|vk::ShaderStageFlagBits::eFragment, 0, sizeof( push_constants_t ), &pc );
         std::vector< vk::DescriptorSet > descriptor_set;
         descriptor_set.reserve( primitive.descriptor_set[ current_frame ].descriptor_set.size() );
         std::transform(
@@ -165,7 +183,7 @@ namespace viewer {
         );
         commands.bindDescriptorSets(
           vk::PipelineBindPoint::eGraphics,
-          *primitive.pipeline.pipeline_layout,
+          *primitive.pipeline[ pipeline_index ].pipeline_layout,
           0,
           descriptor_set,
           {}
@@ -184,4 +202,47 @@ namespace viewer {
       }
     }
   }
+  point_lights_t get_point_lights(
+    const node_t &node,
+    const point_lights_t &lights
+  ) {
+    point_lights_t lights_;
+    for( const auto &n: node.children ) {
+      auto child_lights = get_point_lights( n, lights );
+      lights_.insert( lights_.end(), child_lights.begin(), child_lights.end() );
+    }
+    if( node.has_light ) {
+      if( size_t( node.light ) < lights.size() ) {
+        auto location = node.matrix * glm::vec4( 0.f, 0.f, 0.f, 1.f );
+        auto light = lights[ node.light ];
+        lights_.emplace_back(
+          light.set_location( glm::vec3( location[ 0 ], location[ 1 ], location[ 2 ] ) )
+        );
+      }
+    }
+    return lights_;
+  }
+  cameras_t get_cameras(
+    const node_t &node,
+    const cameras_t &cameras
+  ) {
+    cameras_t cameras_;
+    for( const auto &n: node.children ) {
+      auto child_cameras = get_cameras( n, cameras );
+      cameras_.insert( cameras_.end(), child_cameras.begin(), child_cameras.end() );
+    }
+    if( node.has_camera ) {
+      if( size_t( node.camera ) < cameras.size() ) {
+        auto camera_pos = node.matrix * glm::vec4( 0.f, 0.f, 0.f, 1.f );
+        auto camera_dir = node.matrix * glm::vec4( 0.f, 0.f, -1.f, 1.f );
+        cameras_.emplace_back(
+          camera_t()
+            .set_camera_pos( glm::vec3( camera_pos[ 0 ], camera_pos[ 1 ], camera_pos[ 2 ] ) )
+            .set_camera_direction( glm::vec3( camera_dir[ 0 ], camera_dir[ 1 ], camera_dir[ 2 ] ) )
+        );
+      }
+    }
+    return cameras_;
+  }
 }
+

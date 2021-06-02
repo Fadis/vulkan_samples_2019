@@ -19,6 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <iostream>
 #include <vw/glfw.h>
 #include <vw/exceptions.h>
 namespace vw {
@@ -30,7 +31,12 @@ namespace vw {
     return instance;
   }
   glfw::glfw() {
-    if( !glfwInit() ) throw unable_to_create_surface();
+    if( !glfwInit() ) {
+      const char *p;
+      glfwGetError( &p );
+      std::cerr << p << std::endl;
+      throw unable_to_create_surface();
+    }
   }
   glfw::~glfw() {
     glfwTerminate();

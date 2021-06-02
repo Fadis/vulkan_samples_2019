@@ -23,6 +23,7 @@
 #include <vulkan/vulkan.hpp>
 #include <fx/gltf.h>
 #include <vw/image.h>
+#include <vw/command_buffer.h>
 #include <viewer/image.h>
 namespace viewer {
   images_t create_image(
@@ -37,6 +38,7 @@ namespace viewer {
       if( image_path.is_relative() ) image_path = cd / image_path;
       images.push_back( image_t() );
       std::cout << "[" << cur << "/" << doc.images.size() <<  "] " << image_path.string() << " をロード中..." << std::flush;
+      const vk::UniqueHandle< vk::Semaphore, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > null_semaphore;
       images.back().set_unorm(
         vw::load_image( context, image_path.string(), vk::ImageUsageFlagBits::eSampled, true, false )
       );

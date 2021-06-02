@@ -19,5 +19,14 @@ subdirs(
   	15_draw
   	16_device_group
   	17_timeline_semaphore
+  	30_shadow_map
+  	31_large_shadow_map
+  	32_psm
+  	33_lispsm
+    34_pssm
+    35_pcf
+    36_pcss
+    37_vsm
+    #    53_vsm
 )
 

@@ -33,12 +33,14 @@ namespace viewer {
     const fx::gltf::Document &doc,
     const fx::gltf::Primitive &primitive,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   ) {
     if( primitive.material < 0 || doc.materials.size() <= size_t( primitive.material ) ) throw vw::invalid_gltf( "参照されたmaterialが存在しない", __FILE__, __LINE__ );
     const auto &material = doc.materials[ primitive.material ];
@@ -125,20 +127,41 @@ namespace viewer {
       fs_flag = shader_flag_t( int( fs_flag )|int( shader_flag_t::occlusion ) );
     if( material.emissiveTexture.index != -1 )
       fs_flag = shader_flag_t( int( fs_flag )|int( shader_flag_t::emissive ) );
+    if( extra_textures.size() == swapchain_size && extra_textures[ 0 ].size() >= 1u )
+      fs_flag = shader_flag_t( int( fs_flag )|int( shader_flag_t::shadow ) );
     if( shader_mask ) fs_flag = shader_flag_t( shader_mask );
     auto fs = shader.find( fs_flag );
     if( fs == shader.end() ) {
       throw vw::invalid_gltf( "必要なシェーダがない", __FILE__, __LINE__ );
     }
-    primitive_.set_pipeline(
-      vw::create_pipeline(
-        context, render_pass, push_constant_size, *vs->second, *fs->second,
-        vertex_input_binding,
-        vertex_input_attribute,
-        !material.doubleSided,
-        material.alphaMode == fx::gltf::Material::AlphaMode::Blend
-      )
-    );
+    auto shadow_vs = shader.find( shader_flag_t( int( shader_flag_t::vertex )|int(shader_flag_t::special) | 5 ) );
+    auto shadow_fs = shader.find( shader_flag_t( int( shader_flag_t::fragment )|int(shader_flag_t::special) | 4 ) );
+    std::vector< vw::pipeline_t > pipelines;
+    for( const auto &r: render_pass ) {
+      if( r.shadow )
+        pipelines.emplace_back(
+          vw::create_pipeline(
+            context, r, push_constant_size, *shadow_vs->second, *shadow_fs->second,
+            vertex_input_binding,
+            vertex_input_attribute,
+            !material.doubleSided,
+            material.alphaMode == fx::gltf::Material::AlphaMode::Blend,
+            true
+          )
+        );
+      else
+        pipelines.emplace_back(
+          vw::create_pipeline(
+            context, r, push_constant_size, *vs->second, *fs->second,
+            vertex_input_binding,
+            vertex_input_attribute,
+            !material.doubleSided,
+            material.alphaMode == fx::gltf::Material::AlphaMode::Blend,
+            false
+          )
+        );
+    }
+    primitive_.set_pipeline( std::move( pipelines ) );
     primitive_.set_vertex_buffer( vertex_buffer );
     if( primitive.indices >= 0 ) {
       if( doc.accessors.size() <= size_t( primitive.indices ) ) throw vw::invalid_gltf( "参照されたaccessorsが存在しない", __FILE__, __LINE__ );
@@ -198,6 +221,11 @@ namespace viewer {
           .setBuffer( *uniform_buffer.buffer.buffer )
           .setOffset( 0u )
           .setRange( sizeof( uniforms_t ) );
+      auto dynamic_uniform_buffer_info =
+        vk::DescriptorBufferInfo()
+          .setBuffer( *dynamic_uniform_buffer[ i ].buffer.buffer )
+          .setOffset( 0u )
+          .setRange( sizeof( dynamic_uniforms_t ) );
       
       std::vector< vk::WriteDescriptorSet > updates {
         vk::WriteDescriptorSet()
@@ -206,6 +234,12 @@ namespace viewer {
           .setDescriptorCount( 1 )
           .setPBufferInfo( &uniform_buffer_info )
           .setDstBinding( 0 ),
+        vk::WriteDescriptorSet()
+          .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+          .setDescriptorType( vk::DescriptorType::eUniformBuffer )
+          .setDescriptorCount( 1 )
+          .setPBufferInfo( &dynamic_uniform_buffer_info )
+          .setDstBinding( 7 ),
       };
       const auto bct = material.pbrMetallicRoughness.baseColorTexture.index;
       if( bct >= 0 ) {
@@ -260,7 +294,7 @@ namespace viewer {
         );
       }
       const auto emt = material.emissiveTexture.index;
-      if( oct >= 0 ) {
+      if( emt >= 0 ) {
         if( textures.size() <= size_t( emt ) ) throw vw::invalid_gltf( "参照されたtextureが存在しない", __FILE__, __LINE__ );
         const auto &emt_texture = textures[ emt ];
         updates.push_back(
@@ -270,6 +304,58 @@ namespace viewer {
             .setDescriptorCount( 1 )
             .setPImageInfo( &emt_texture.srgb )
             .setDstBinding( 5 )
+        );
+      }
+      if( emt >= 0 ) {
+        if( textures.size() <= size_t( emt ) ) throw vw::invalid_gltf( "参照されたtextureが存在しない", __FILE__, __LINE__ );
+        const auto &emt_texture = textures[ emt ];
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &emt_texture.srgb )
+            .setDstBinding( 5 )
+        );
+      }
+      if( extra_textures.size() == swapchain_size && extra_textures[ i ].size() >= 1u ) {
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &extra_textures[ i ][ 0 ].unorm )
+            .setDstBinding( 6 )
+        );
+      }
+      if( extra_textures.size() == swapchain_size && extra_textures[ i ].size() >= 2u ) {
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &extra_textures[ i ][ 1 ].unorm )
+            .setDstBinding( 8 )
+        );
+      }
+      if( extra_textures.size() == swapchain_size && extra_textures[ i ].size() >= 3u ) {
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &extra_textures[ i ][ 2 ].unorm )
+            .setDstBinding( 9 )
+        );
+      }
+      if( extra_textures.size() == swapchain_size && extra_textures[ i ].size() >= 4u ) {
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &extra_textures[ i ][ 3 ].unorm )
+            .setDstBinding( 10 )
         );
       }
       context.device->updateDescriptorSets( updates, nullptr );
@@ -287,12 +373,14 @@ namespace viewer {
     const fx::gltf::Document &doc,
     int32_t index,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   ) {
     if( index < 0 || doc.meshes.size() <= size_t( index ) ) throw vw::invalid_gltf( "参照されたmeshが存在しない", __FILE__, __LINE__ );
     const auto &mesh = doc.meshes[ index ];
@@ -317,7 +405,9 @@ namespace viewer {
         shader,
         textures,
         swapchain_size,
-        shader_mask
+        shader_mask,
+        extra_textures,
+        dynamic_uniform_buffer
       ) );
       min[ 0 ] = std::min( min[ 0 ], mesh_.primitive.back().min[ 0 ] );
       min[ 1 ] = std::min( min[ 1 ], mesh_.primitive.back().min[ 1 ] );
@@ -333,16 +423,18 @@ namespace viewer {
   meshes_t create_mesh(
     const fx::gltf::Document &doc,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   ) {
     meshes_t mesh;
     for( uint32_t i = 0; i != doc.meshes.size(); ++i )
-      mesh.push_back( create_mesh( doc, i, context, render_pass, push_constant_size, shader, textures, swapchain_size, shader_mask ) );
+      mesh.push_back( create_mesh( doc, i, context, render_pass, push_constant_size, shader, textures, swapchain_size, shader_mask, extra_textures, dynamic_uniform_buffer ) );
     return mesh;
   }
 }
