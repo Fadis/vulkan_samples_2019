@@ -70,7 +70,8 @@ namespace viewer {
     const glm::mat4 &lookat,
     const glm::vec3 &camera_pos,
     const glm::vec3 &light_pos,
-    float light_energy
+    float light_energy,
+    uint32_t pipeline_index
   );
 }
 #endif

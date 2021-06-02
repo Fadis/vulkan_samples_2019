@@ -139,14 +139,15 @@ namespace viewer {
     const glm::mat4 &lookat,
     const glm::vec3 &camera_pos,
     const glm::vec3 &light_pos,
-    float light_energy
+    float light_energy,
+    uint32_t pipeline_index
   ) {
     for( const auto &n: node.children )
-      draw_node( context, commands, n, meshes, buffers, current_frame, projection, lookat, camera_pos, light_pos, light_energy );
+      draw_node( context, commands, n, meshes, buffers, current_frame, projection, lookat, camera_pos, light_pos, light_energy, pipeline_index );
     if( node.has_mesh ) {
       const auto &mesh = meshes[ node.mesh ];
       for( const auto &primitive: mesh.primitive ) {
-        commands.bindPipeline( vk::PipelineBindPoint::eGraphics, *primitive.pipeline.pipeline );
+        commands.bindPipeline( vk::PipelineBindPoint::eGraphics, *primitive.pipeline[ pipeline_index ].pipeline );
         auto pc = push_constants_t()
           .set_world_matrix( node.matrix )
           .set_projection_matrix( projection )
@@ -154,7 +155,7 @@ namespace viewer {
           .set_eye_pos( glm::vec4( camera_pos, 1.0 ) )
           .set_light_pos( glm::vec4( light_pos, 1.0 ) )
           .set_light_energy( light_energy );
-        commands.pushConstants( *primitive.pipeline.pipeline_layout, vk::ShaderStageFlagBits::eVertex|vk::ShaderStageFlagBits::eFragment, 0, sizeof( push_constants_t ), &pc );
+        commands.pushConstants( *primitive.pipeline[ pipeline_index ].pipeline_layout, vk::ShaderStageFlagBits::eVertex|vk::ShaderStageFlagBits::eFragment, 0, sizeof( push_constants_t ), &pc );
         std::vector< vk::DescriptorSet > descriptor_set;
         descriptor_set.reserve( primitive.descriptor_set[ current_frame ].descriptor_set.size() );
         std::transform(
@@ -165,7 +166,7 @@ namespace viewer {
         );
         commands.bindDescriptorSets(
           vk::PipelineBindPoint::eGraphics,
-          *primitive.pipeline.pipeline_layout,
+          *primitive.pipeline[ pipeline_index ].pipeline_layout,
           0,
           descriptor_set,
           {}

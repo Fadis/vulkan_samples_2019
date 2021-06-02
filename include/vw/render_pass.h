@@ -33,7 +33,7 @@ namespace vw {
     vk::UniqueHandle< vk::RenderPass, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > render_pass;
   };
   render_pass_t create_render_pass(
-    const context_t &context
+    const context_t &context, bool off_screen = false
   );
 }
 #endif

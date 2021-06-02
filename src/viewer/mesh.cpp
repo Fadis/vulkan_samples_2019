@@ -33,7 +33,7 @@ namespace viewer {
     const fx::gltf::Document &doc,
     const fx::gltf::Primitive &primitive,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,
@@ -130,15 +130,18 @@ namespace viewer {
     if( fs == shader.end() ) {
       throw vw::invalid_gltf( "必要なシェーダがない", __FILE__, __LINE__ );
     }
-    primitive_.set_pipeline(
-      vw::create_pipeline(
-        context, render_pass, push_constant_size, *vs->second, *fs->second,
-        vertex_input_binding,
-        vertex_input_attribute,
-        !material.doubleSided,
-        material.alphaMode == fx::gltf::Material::AlphaMode::Blend
-      )
-    );
+    std::vector< vw::pipeline_t > pipelines;
+    for( const auto &r: render_pass )
+      pipelines.emplace_back(
+        vw::create_pipeline(
+          context, r, push_constant_size, *vs->second, *fs->second,
+          vertex_input_binding,
+          vertex_input_attribute,
+          !material.doubleSided,
+          material.alphaMode == fx::gltf::Material::AlphaMode::Blend
+        )
+      );
+    primitive_.set_pipeline( std::move( pipelines ) );
     primitive_.set_vertex_buffer( vertex_buffer );
     if( primitive.indices >= 0 ) {
       if( doc.accessors.size() <= size_t( primitive.indices ) ) throw vw::invalid_gltf( "参照されたaccessorsが存在しない", __FILE__, __LINE__ );
@@ -287,7 +290,7 @@ namespace viewer {
     const fx::gltf::Document &doc,
     int32_t index,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,
@@ -333,7 +336,7 @@ namespace viewer {
   meshes_t create_mesh(
     const fx::gltf::Document &doc,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,

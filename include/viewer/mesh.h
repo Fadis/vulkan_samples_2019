@@ -58,7 +58,7 @@ namespace viewer {
     LIBSTAMP_SETTER( min )
     LIBSTAMP_SETTER( max )
     LIBSTAMP_SETTER( uniform_buffer )
-    vw::pipeline_t pipeline;
+    std::vector< vw::pipeline_t > pipeline;
     std::unordered_map< uint32_t, buffer_view_t > vertex_buffer;
     bool indexed;
     buffer_view_t index_buffer;
@@ -110,7 +110,7 @@ namespace viewer {
     const fx::gltf::Document &doc,
     int32_t index,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,
@@ -120,7 +120,7 @@ namespace viewer {
   meshes_t create_mesh(
     const fx::gltf::Document &doc,
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     uint32_t push_constant_size,
     const shader_t &shader,
     const textures_t &textures,

@@ -26,19 +26,20 @@
 #include <vw/render_pass.h>
 namespace vw {
   render_pass_t create_render_pass(
-    const context_t &context
+    const context_t &context,
+    bool off_screen
   ) {
     render_pass_t render_pass;
     const std::vector< vk::AttachmentDescription > attachments{
       vk::AttachmentDescription()
-        .setFormat( context.surface_format.format )
+        .setFormat( off_screen ? vk::Format::eR32G32B32A32Sfloat : context.surface_format.format )
         .setSamples( vk::SampleCountFlagBits::e1 )
         .setLoadOp( vk::AttachmentLoadOp::eClear )
         .setStoreOp( vk::AttachmentStoreOp::eStore )
         .setStencilLoadOp( vk::AttachmentLoadOp::eDontCare )
         .setStencilStoreOp( vk::AttachmentStoreOp::eDontCare )
         .setInitialLayout( vk::ImageLayout::eUndefined )
-        .setFinalLayout( vk::ImageLayout::ePresentSrcKHR ),
+        .setFinalLayout( off_screen ? vk::ImageLayout::eShaderReadOnlyOptimal : vk::ImageLayout::ePresentSrcKHR ),
       vk::AttachmentDescription()
         .setFormat( vk::Format::eD16Unorm )
         .setSamples( vk::SampleCountFlagBits::e1 )

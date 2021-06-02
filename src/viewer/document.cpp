@@ -32,7 +32,7 @@
 namespace viewer {
   document_t load_gltf(
     const vw::context_t &context,
-    const vw::render_pass_t &render_pass,
+    const std::vector< vw::render_pass_t > &render_pass,
     std::filesystem::path path,
     uint32_t swapchain_size,
     const std::filesystem::path &shader_dir,

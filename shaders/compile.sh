@@ -120,6 +120,8 @@ echo special2.frag
 cat special2.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special2.frag.spv --target-env=vulkan1.2 -
 echo special3.frag
 cat special3.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special3.frag.spv --target-env=vulkan1.2 -
+echo special4.frag
+cat special3.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special4.frag.spv --target-env=vulkan1.2 -
 
 echo add.comp
 cat add.comp|${GLSLI}|${GLSLC} -fshader-stage=comp -o add.comp.spv --target-env=vulkan1.2 -
