@@ -53,6 +53,19 @@ namespace viewer {
     );
     return texture_;
   }
+  texture_t create_texture(
+    const vw::image_t &image,
+    const sampler_t &sampler
+  ) {
+    texture_t texture_;
+    texture_.set_unorm(
+      vk::DescriptorImageInfo()
+        .setImageLayout( vk::ImageLayout::eShaderReadOnlyOptimal )
+        .setImageView( *image.image_view )
+        .setSampler( *sampler.sampler )
+    );
+    return texture_;
+  }
   textures_t create_texture(
     const fx::gltf::Document &doc,
     const vw::context_t &context,

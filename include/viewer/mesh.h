@@ -115,7 +115,8 @@ namespace viewer {
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > >&
   );
   meshes_t create_mesh(
     const fx::gltf::Document &doc,
@@ -125,7 +126,8 @@ namespace viewer {
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > >&
   );
 }
 #endif

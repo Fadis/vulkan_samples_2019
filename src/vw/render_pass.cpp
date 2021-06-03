@@ -27,7 +27,8 @@
 namespace vw {
   render_pass_t create_render_pass(
     const context_t &context,
-    bool off_screen
+    bool off_screen,
+    bool shadow
   ) {
     render_pass_t render_pass;
     const std::vector< vk::AttachmentDescription > attachments{
@@ -70,6 +71,7 @@ namespace vw {
         .setSubpassCount( subpass.size() )
         .setPSubpasses( subpass.data() )
     ) );
+    render_pass.set_shadow( shadow );
     return render_pass;
   }
 }

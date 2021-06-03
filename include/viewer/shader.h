@@ -34,9 +34,10 @@ namespace viewer {
     emissive = ( 1 << 4 ),
     tangent = ( 1 << 5 ),
     skin = ( 1 << 6 ),
-    vertex = ( 1 << 7 ),
-    fragment = ( 1 << 8 ),
-    special = ( 1 << 9 )
+    shadow = ( 1 << 7 ),
+    vertex = ( 1 << 8 ),
+    fragment = ( 1 << 9 ),
+    special = ( 1 << 10 )
   };
   using shader_t = std::unordered_map< shader_flag_t, vk::UniqueHandle< vk::ShaderModule, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > >;
   std::optional< shader_flag_t > get_shader_flag( const std::filesystem::path &path );

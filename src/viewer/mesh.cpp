@@ -38,7 +38,8 @@ namespace viewer {
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures
   ) {
     if( primitive.material < 0 || doc.materials.size() <= size_t( primitive.material ) ) throw vw::invalid_gltf( "参照されたmaterialが存在しない", __FILE__, __LINE__ );
     const auto &material = doc.materials[ primitive.material ];
@@ -125,22 +126,39 @@ namespace viewer {
       fs_flag = shader_flag_t( int( fs_flag )|int( shader_flag_t::occlusion ) );
     if( material.emissiveTexture.index != -1 )
       fs_flag = shader_flag_t( int( fs_flag )|int( shader_flag_t::emissive ) );
+    if( extra_textures.size() == swapchain_size && extra_textures[ 0 ].size() >= 1u )
+      fs_flag = shader_flag_t( int( fs_flag )|int( shader_flag_t::shadow ) );
     if( shader_mask ) fs_flag = shader_flag_t( shader_mask );
     auto fs = shader.find( fs_flag );
     if( fs == shader.end() ) {
       throw vw::invalid_gltf( "必要なシェーダがない", __FILE__, __LINE__ );
     }
+    auto shadow_vs = shader.find( shader_flag_t( shader_flag_t::vertex ) );
+    auto shadow_fs = shader.find( shader_flag_t( int( shader_flag_t::fragment )|int(shader_flag_t::special) | 4 ) );
+    std::cout << "fs_flag : " << int(fs_flag) << std::endl;
     std::vector< vw::pipeline_t > pipelines;
-    for( const auto &r: render_pass )
-      pipelines.emplace_back(
-        vw::create_pipeline(
-          context, r, push_constant_size, *vs->second, *fs->second,
-          vertex_input_binding,
-          vertex_input_attribute,
-          !material.doubleSided,
-          material.alphaMode == fx::gltf::Material::AlphaMode::Blend
-        )
-      );
+    for( const auto &r: render_pass ) {
+      if( r.shadow )
+        pipelines.emplace_back(
+          vw::create_pipeline(
+            context, r, push_constant_size, *shadow_vs->second, *shadow_fs->second,
+            vertex_input_binding,
+            vertex_input_attribute,
+            !material.doubleSided,
+            material.alphaMode == fx::gltf::Material::AlphaMode::Blend
+          )
+        );
+      else
+        pipelines.emplace_back(
+          vw::create_pipeline(
+            context, r, push_constant_size, *vs->second, *fs->second,
+            vertex_input_binding,
+            vertex_input_attribute,
+            !material.doubleSided,
+            material.alphaMode == fx::gltf::Material::AlphaMode::Blend
+          )
+        );
+    }
     primitive_.set_pipeline( std::move( pipelines ) );
     primitive_.set_vertex_buffer( vertex_buffer );
     if( primitive.indices >= 0 ) {
@@ -263,7 +281,7 @@ namespace viewer {
         );
       }
       const auto emt = material.emissiveTexture.index;
-      if( oct >= 0 ) {
+      if( emt >= 0 ) {
         if( textures.size() <= size_t( emt ) ) throw vw::invalid_gltf( "参照されたtextureが存在しない", __FILE__, __LINE__ );
         const auto &emt_texture = textures[ emt ];
         updates.push_back(
@@ -273,6 +291,29 @@ namespace viewer {
             .setDescriptorCount( 1 )
             .setPImageInfo( &emt_texture.srgb )
             .setDstBinding( 5 )
+        );
+      }
+      if( emt >= 0 ) {
+        if( textures.size() <= size_t( emt ) ) throw vw::invalid_gltf( "参照されたtextureが存在しない", __FILE__, __LINE__ );
+        const auto &emt_texture = textures[ emt ];
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &emt_texture.srgb )
+            .setDstBinding( 5 )
+        );
+      }
+      if( extra_textures.size() == swapchain_size && extra_textures[ i ].size() >= 1u ) {
+        std::cout << "mesh" << std::endl;
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &extra_textures[ i ][ 0 ].unorm )
+            .setDstBinding( 6 )
         );
       }
       context.device->updateDescriptorSets( updates, nullptr );
@@ -295,7 +336,8 @@ namespace viewer {
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures
   ) {
     if( index < 0 || doc.meshes.size() <= size_t( index ) ) throw vw::invalid_gltf( "参照されたmeshが存在しない", __FILE__, __LINE__ );
     const auto &mesh = doc.meshes[ index ];
@@ -320,7 +362,8 @@ namespace viewer {
         shader,
         textures,
         swapchain_size,
-        shader_mask
+        shader_mask,
+        extra_textures
       ) );
       min[ 0 ] = std::min( min[ 0 ], mesh_.primitive.back().min[ 0 ] );
       min[ 1 ] = std::min( min[ 1 ], mesh_.primitive.back().min[ 1 ] );
@@ -341,11 +384,12 @@ namespace viewer {
     const shader_t &shader,
     const textures_t &textures,
     uint32_t swapchain_size,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures
   ) {
     meshes_t mesh;
     for( uint32_t i = 0; i != doc.meshes.size(); ++i )
-      mesh.push_back( create_mesh( doc, i, context, render_pass, push_constant_size, shader, textures, swapchain_size, shader_mask ) );
+      mesh.push_back( create_mesh( doc, i, context, render_pass, push_constant_size, shader, textures, swapchain_size, shader_mask, extra_textures ) );
     return mesh;
   }
 }

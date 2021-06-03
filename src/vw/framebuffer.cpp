@@ -93,9 +93,25 @@ namespace vw {
           .setExtent( { width, height, 1 } )
           .setMipLevels( 1 )
           .setArrayLayers( 1 )
-          .setUsage( vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled ),
+          .setUsage( vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc ),
         VMA_MEMORY_USAGE_GPU_ONLY
       ) );
+      framebuffers.back().color_image.set_image_view(
+        context.device->createImageViewUnique(
+          vk::ImageViewCreateInfo()
+            .setImage( *framebuffers.back().color_image.image )
+            .setViewType( vk::ImageViewType::e2D )
+            .setFormat( vk::Format::eR32G32B32A32Sfloat )
+            .setSubresourceRange(
+              vk::ImageSubresourceRange()
+                .setAspectMask( vk::ImageAspectFlagBits::eColor )
+                .setBaseMipLevel( 0 )
+                .setLevelCount( 1 )
+                .setBaseArrayLayer( 0 )
+                .setLayerCount( 1 )
+            )
+        )
+      );
       framebuffers.back().set_swapchain_image_view(
         context.device->createImageViewUnique(
           vk::ImageViewCreateInfo()

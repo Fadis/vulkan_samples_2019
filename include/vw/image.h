@@ -33,11 +33,13 @@ namespace vw {
     LIBSTAMP_SETTER( image_view )
     LIBSTAMP_SETTER( width )
     LIBSTAMP_SETTER( height )
+    LIBSTAMP_SETTER( format )
     std::shared_ptr< vk::Image > image;
     std::shared_ptr< VmaAllocation > allocation;
     vk::UniqueHandle< vk::ImageView, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > image_view;
     unsigned int width;
     unsigned int height;
+    vk::Format format;
   };
   image_t get_image(
     const context_t &context,

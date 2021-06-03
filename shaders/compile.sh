@@ -111,6 +111,111 @@ cat tangent_mr_oc_em_no.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_mr
 echo tangent_oc_em_no.frag
 cat tangent_oc_em_no.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_oc_em_no.frag.spv --target-env=vulkan1.2 -
 
+echo world_sh.frag
+cat world_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_sh.frag.spv --target-env=vulkan1.2 -
+echo world_bc_sh.frag
+cat world_bc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_sh.frag.spv --target-env=vulkan1.2 -
+echo world_mr_sh.frag
+cat world_mr_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_mr_sh.frag.spv --target-env=vulkan1.2 -
+echo world_bc_mr_sh.frag
+cat world_bc_mr_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_mr_sh.frag.spv --target-env=vulkan1.2 -
+echo world_bc_mr_oc_sh.frag
+cat world_bc_mr_oc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_mr_oc_sh.frag.spv --target-env=vulkan1.2 -
+echo world_bc_oc_sh.frag
+cat world_bc_oc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_oc_sh.frag.spv --target-env=vulkan1.2 -
+echo world_mr_oc_sh.frag
+cat world_mr_oc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_mr_oc_sh.frag.spv --target-env=vulkan1.2 -
+echo world_oc_sh.frag
+cat world_oc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_oc_sh.frag.spv --target-env=vulkan1.2 -
+
+echo world_em_sh.frag
+cat world_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_em_sh.frag.spv --target-env=vulkan1.2 -
+echo world_bc_em_sh.frag
+cat world_bc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_em_sh.frag.spv --target-env=vulkan1.2 -
+echo world_mr_em_sh.frag
+cat world_mr_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_mr_em_sh.frag.spv --target-env=vulkan1.2 -
+echo world_bc_mr_em_sh.frag
+cat world_bc_mr_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_mr_em_sh.frag.spv --target-env=vulkan1.2 -
+echo world_bc_mr_oc_em_sh.frag
+cat world_bc_mr_oc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_mr_oc_em_sh.frag.spv --target-env=vulkan1.2 -
+echo world_mc_oc_em_sh.frag
+cat world_bc_oc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_oc_em_sh.frag.spv --target-env=vulkan1.2 -
+echo world_mr_oc_em_sh.frag
+cat world_mr_oc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_mr_oc_em_sh.frag.spv --target-env=vulkan1.2 -
+echo world_oc_em_sh.frag
+cat world_oc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_oc_em_sh.frag.spv --target-env=vulkan1.2 -
+
+
+echo tangent_sh.frag
+cat tangent_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_sh.frag
+cat tangent_bc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_mr_sh.frag
+cat tangent_mr_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_mr_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_mr_sh.frag
+cat tangent_bc_mr_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_mr_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_mr_oc_sh.frag
+cat tangent_bc_mr_oc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_mr_oc_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_oc_sh.frag
+cat tangent_bc_oc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_oc_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_mr_oc_sh.frag
+cat tangent_mr_oc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_mr_oc_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_oc_sh.frag
+cat tangent_oc_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_oc_sh.frag.spv --target-env=vulkan1.2 -
+
+echo tangent_em_sh.frag
+cat tangent_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_em_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_em_sh.frag
+cat tangent_bc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_em_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_mr_em_sh.frag
+cat tangent_mr_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_mr_em_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_mr_em_sh.frag
+cat tangent_bc_mr_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_mr_em_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_mr_oc_em_sh.frag
+cat tangent_bc_mr_oc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_mr_oc_em_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_oc_em_sh.frag
+cat tangent_bc_oc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_oc_em_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_mr_oc_em_sh.frag
+cat tangent_mr_oc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_mr_oc_em_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_oc_em_sh.frag
+cat tangent_oc_em_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_oc_em_sh.frag.spv --target-env=vulkan1.2 -
+
+
+echo tangent_no_sh.frag
+cat tangent_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_no_sh.frag
+cat tangent_bc_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_mr_no_sh.frag
+cat tangent_mr_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_mr_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_mr_no_sh.frag
+cat tangent_bc_mr_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_mr_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_mr_oc_no_sh.frag
+cat tangent_bc_mr_oc_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_mr_oc_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_oc_no_sh.frag
+cat tangent_bc_oc_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_oc_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_mr_oc_no_sh.frag
+cat tangent_mr_oc_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_mr_oc_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_oc_no_sh.frag
+cat tangent_oc_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_oc_no_sh.frag.spv --target-env=vulkan1.2 -
+
+echo tangent_em_no_sh.frag
+cat tangent_em_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_em_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_em_no_sh.frag
+cat tangent_bc_em_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_em_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_mr_em_no_sh.frag
+cat tangent_mr_em_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_mr_em_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_mr_em_no_sh.frag
+cat tangent_bc_mr_em_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_mr_em_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_mr_oc_em_no_sh.frag
+cat tangent_bc_mr_oc_em_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_mr_oc_em_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_bc_oc_em_no_sh.frag
+cat tangent_bc_oc_em_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_bc_oc_em_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_mr_oc_em_no_sh.frag
+cat tangent_mr_oc_em_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_mr_oc_em_no_sh.frag.spv --target-env=vulkan1.2 -
+echo tangent_oc_em_no_sh.frag
+cat tangent_oc_em_no_sh.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o tangent_oc_em_no_sh.frag.spv --target-env=vulkan1.2 -
+
+
 
 echo special0.frag
 cat special0.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special0.frag.spv --target-env=vulkan1.2 -
@@ -121,7 +226,7 @@ cat special2.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special2.frag.spv --t
 echo special3.frag
 cat special3.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special3.frag.spv --target-env=vulkan1.2 -
 echo special4.frag
-cat special3.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special4.frag.spv --target-env=vulkan1.2 -
+cat special4.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special4.frag.spv --target-env=vulkan1.2 -
 
 echo add.comp
 cat add.comp|${GLSLI}|${GLSLC} -fshader-stage=comp -o add.comp.spv --target-env=vulkan1.2 -

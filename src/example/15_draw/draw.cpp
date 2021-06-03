@@ -140,13 +140,15 @@ int main( int argc, const char *argv[] ) {
     auto fence = vw::create_framebuffer_fences(
       context, framebuffer.size(), 1u
     );
+    std::vector< std::vector< viewer::texture_t > > extra_textures;
     viewer::document_t document = viewer::load_gltf(
       context,
       render_pass,
       std::filesystem::path( config.input ),
       framebuffer.size(),
       config.shader,
-      config.shader_mask
+      config.shader_mask,
+      extra_textures
     );
     auto center = ( document.node.min + document.node.max ) / 2.f;
     auto scale = std::abs( glm::length( document.node.max - document.node.min ) );

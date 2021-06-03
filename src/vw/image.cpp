@@ -56,6 +56,7 @@ namespace vw {
     );
     image.set_width( image_create_info.extent.width );
     image.set_height( image_create_info.extent.height );
+    image.set_format( image_create_info.format );
     return image;
   }
   uint32_t get_pot( uint32_t v ) {
@@ -268,10 +269,19 @@ namespace vw {
   ) {
     auto width = image.width >> mipmap;
     auto height = image.height >> mipmap;
+    unsigned int element_size = 1u;
+    if( image.format == vk::Format::eR32G32B32A32Sfloat )
+      element_size = 4u;
+    else if( image.format == vk::Format::eR8G8B8A8Unorm )
+      element_size = 1u;
+    else if( image.format == vk::Format::eR8G8B8A8Srgb )
+      element_size = 1u;
+    else
+      throw -1;
     auto temporary = get_buffer(
       context,
       vk::BufferCreateInfo()
-        .setSize( width * height * 4 )
+        .setSize( width * height * element_size * 4 )
         .setUsage( vk::BufferUsageFlagBits::eTransferDst )
         .setSharingMode( vk::SharingMode::eExclusive )
         .setQueueFamilyIndexCount( 0 )
@@ -318,7 +328,16 @@ namespace vw {
     using namespace OIIO_NAMESPACE;
     auto out = ImageOutput::create( filename );
     if( !out ) throw -1;
-    ImageSpec spec( width, height, 4, TypeDesc::UINT8 );
+    auto oiio_type = TypeDesc::UINT8;
+    if( image.format == vk::Format::eR32G32B32A32Sfloat )
+      oiio_type = TypeDesc::FLOAT;
+    else if( image.format == vk::Format::eR8G8B8A8Unorm )
+      oiio_type = TypeDesc::UINT8;
+    else if( image.format == vk::Format::eR8G8B8A8Srgb )
+      oiio_type = TypeDesc::UINT8;
+    else
+      throw -1;
+    ImageSpec spec( width, height, 4, oiio_type );
     out->open( filename, spec );
     {
       void* mapped_memory;
@@ -330,7 +349,7 @@ namespace vw {
           if( p ) vmaUnmapMemory( *allocator, *allocation );
         }
       );
-      out->write_image( TypeDesc::UINT8, mapped.get() );
+      out->write_image( oiio_type, mapped.get() );
     }
     out->close();
   }

@@ -29,11 +29,13 @@ namespace vw {
   struct render_pass_t {
     LIBSTAMP_SETTER( attachments )
     LIBSTAMP_SETTER( render_pass )
+    LIBSTAMP_SETTER( shadow )
     std::vector< vk::AttachmentDescription > attachments;
     vk::UniqueHandle< vk::RenderPass, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > render_pass;
+    bool shadow;
   };
   render_pass_t create_render_pass(
-    const context_t &context, bool off_screen = false
+    const context_t &context, bool off_screen = false, bool shadow = false
   );
 }
 #endif

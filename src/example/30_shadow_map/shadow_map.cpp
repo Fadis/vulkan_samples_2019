@@ -139,25 +139,38 @@ int main( int argc, const char *argv[] ) {
       }
     );
     std::vector< vw::render_pass_t > render_pass;
-    render_pass.emplace_back( vw::create_render_pass( context, false ) );
-    render_pass.emplace_back( vw::create_render_pass( context, true ) );
+    render_pass.emplace_back( vw::create_render_pass( context, true, true ) );
+    render_pass.emplace_back( vw::create_render_pass( context, false, false ) );
     std::vector< std::vector< vw::framebuffer_t > > framebuffers;
     framebuffers.emplace_back( vw::create_framebuffer(
-      context, render_pass[ 0 ]
+      context, render_pass[ 0 ], 512u, 512u
     ) );
     framebuffers.emplace_back( vw::create_framebuffer(
-      context, render_pass[ 1 ], 512u, 512u
+      context, render_pass[ 1 ]
     ) );
     auto fence = vw::create_framebuffer_fences(
       context, framebuffers[ 0 ].size(), framebuffers.size()
     );
+    viewer::sampler_t shadow_sampler = viewer::create_nomip_sampler( context );
+    std::vector< std::vector< viewer::texture_t > > extra_textures;
+    for( size_t i = 0u; i != framebuffers[ 0 ].size(); ++i ) {
+      extra_textures.emplace_back(
+        std::vector< viewer::texture_t >{
+          viewer::create_texture(
+            framebuffers[ 0 ][ i ].color_image,
+            shadow_sampler
+          )
+        }
+      );
+    }
     viewer::document_t document = viewer::load_gltf(
       context,
       render_pass,
       std::filesystem::path( config.input ),
       framebuffers[ 0 ].size(),
       config.shader,
-      config.shader_mask
+      config.shader_mask,
+      extra_textures
     );
     auto center = ( document.node.min + document.node.max ) / 2.f;
     auto scale = std::abs( glm::length( document.node.max - document.node.min ) );
@@ -169,23 +182,31 @@ int main( int argc, const char *argv[] ) {
       vk::ClearColorValue( std::array< float, 4u >{ config.purple ? 1.0f : 0.0f, 0.0f, config.purple ? 1.0f : 0.0f, 1.0f } ),
       vk::ClearDepthStencilValue( 1.f, 0 )
     };
-    auto const viewport =
-      vk::Viewport()
-        .setWidth( context.width )
-        .setHeight( context.height )
-        .setMinDepth( 0.0f )
-        .setMaxDepth( 1.0f );
-    vk::Rect2D const scissor( vk::Offset2D(0, 0), vk::Extent2D( context.width, context.height ) );
+
+    std::vector< vk::Viewport > viewport;
+    std::vector< vk::Rect2D > scissor;
+    for( const auto &fb: framebuffers ) {
+      viewport.emplace_back(
+        vk::Viewport()
+          .setWidth( fb[ 0 ].width )
+          .setHeight( fb[ 0 ].height )
+          .setMinDepth( 0.0f )
+          .setMaxDepth( 1.0f )
+      );
+      scissor.emplace_back( vk::Rect2D( vk::Offset2D(0, 0), vk::Extent2D( fb[ 0 ].width, fb[ 0 ].height ) ) );
+    }
     std::cout << scale << std::endl;
     const std::vector< glm::mat4 > projection{
-      glm::perspective( 30.f, (float(framebuffers[ 0 ][ 0 ].width)/float(framebuffers[ 0 ][ 0 ].height)), std::min(0.1f*scale,0.5f), 150.f*scale ),
-      glm::perspective( 30.f, (float(framebuffers[ 1 ][ 0 ].width)/float(framebuffers[ 1 ][ 0 ].height)), std::min(0.1f*scale,0.5f), 150.f*scale )
+      glm::perspective( 30.f, (float(framebuffers[ 0 ][ 0 ].width)/float(framebuffers[ 0 ][ 0 ].height)), std::min(0.3f*scale,0.5f), 10.f*scale ),
+      glm::perspective( 30.f, (float(framebuffers[ 1 ][ 0 ].width)/float(framebuffers[ 1 ][ 0 ].height)), std::min(0.3f*scale,0.5f), 10.f*scale )
     };
     auto camera_pos = center + glm::vec3{ 0.f, 0.f, 1.0f*scale };
     float camera_angle = 0;//M_PI;
     auto speed = 0.01f*scale;
     auto light_pos = glm::vec3{ 0.0f*scale, 1.2f*scale, 0.0f*scale };
     float light_energy = 1.0f;
+    bool snapped = false;
+    uint32_t global_current_frame = 0u;
     while( !context.input_state->quit ) {
       if( context.input_state->a ) camera_angle += 0.01 * M_PI/2;
       if( context.input_state->d ) camera_angle -= 0.01 * M_PI/2;
@@ -215,6 +236,10 @@ int main( int argc, const char *argv[] ) {
         if( reset_fences_result != vk::Result::eSuccess )
           vk::throwResultException( reset_fences_result, "waitForFences failed" );
       }
+      if( global_current_frame == 4u && !snapped ) {
+        snapped = true;
+        dump_image( context, framebuffers[ 0 ][ current_frame % 3 ].color_image, "hoge.png", 0 );
+      }
       auto image_index = context.device->acquireNextImageKHR( *context.swapchain, UINT64_MAX, *fe.image_acquired_semaphore, vk::Fence() );
       for( size_t i = 0u; i != framebuffers.size(); ++i ) {
         auto &fb = framebuffers[ i ][ image_index.value ];
@@ -231,8 +256,8 @@ int main( int argc, const char *argv[] ) {
           .setClearValueCount( clear_values.size() )
           .setPClearValues( clear_values.data() );
         gcb->beginRenderPass( &pass_info, vk::SubpassContents::eInline );
-        gcb->setViewport( 0, 1, &viewport );
-        gcb->setScissor( 0, 1, &scissor );
+        gcb->setViewport( 0, 1, &viewport[ i ] );
+        gcb->setScissor( 0, 1, &scissor[ i ] );
         viewer::draw_node(
           context,
           *gcb,
@@ -273,6 +298,7 @@ int main( int argc, const char *argv[] ) {
         vk::throwResultException( present_result, "presentKHR failed" );
       glfwPollEvents();
       ++current_frame;
+      ++global_current_frame;
       current_frame %= framebuffers[ 0 ].size();
       vw::wait_for_sync( begin_time );
     }

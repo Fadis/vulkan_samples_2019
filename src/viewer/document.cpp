@@ -36,7 +36,8 @@ namespace viewer {
     std::filesystem::path path,
     uint32_t swapchain_size,
     const std::filesystem::path &shader_dir,
-    int shader_mask
+    int shader_mask,
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures
   ) {
     fx::gltf::Document doc = fx::gltf::LoadFromText( path.string() );
     document_t document;
@@ -78,7 +79,8 @@ namespace viewer {
       shader,
       document.texture,
       swapchain_size,
-      shader_mask
+      shader_mask,
+      extra_textures
     ) );
     document.set_buffer( viewer::create_buffer(
       doc,

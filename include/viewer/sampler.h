@@ -44,6 +44,9 @@ namespace viewer {
   sampler_t create_default_sampler(
     const vw::context_t &context
   );
+  sampler_t create_nomip_sampler(
+    const vw::context_t &context
+  );
 }
 #endif
 
