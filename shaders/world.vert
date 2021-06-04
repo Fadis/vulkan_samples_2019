@@ -26,6 +26,6 @@ void main() {
   vec4 normal = vec4( normalize( ( push_constants.world_matrix * local_normal ).xyz ), 1.0 );
   output_normal = normalize( ( normal ).xyz );
   output_tex_coord = input_texcoord0;
-  gl_Position = push_constants.projection_matrix * push_constants.camera_matrix * pos;
+  gl_Position = dynamic_uniforms.projection_matrix * dynamic_uniforms.camera_matrix * pos;
 }
 

@@ -19,15 +19,15 @@ void main()  {
   mat3 ts = transpose( mat3( tangent, binormal, normal ) );
   vec3 pos = input_position.xyz;
   vec3 N = normalize( texture( normal_map, input_texcoord ).rgb * vec3( uniforms.normal_scale, uniforms.normal_scale, 1 ) * 2.0 - 1.0 );
-  vec3 V = ts * normalize(push_constants.eye_pos.xyz-pos);
-  vec3 L = ts * normalize(push_constants.light_pos.xyz-pos);
+  vec3 V = ts * normalize(dynamic_uniforms.eye_pos.xyz-pos);
+  vec3 L = ts * normalize(dynamic_uniforms.light_pos.xyz-pos);
   vec4 mr = texture( metallic_roughness, input_texcoord );
   float roughness = mr.g * uniforms.roughness;
   float metallicness = mr.b * uniforms.metalness;
   vec4 diffuse_color = texture( base_color, input_texcoord ) * uniforms.base_color;
   float ambient = 0.05;
   vec3 emissive = uniforms.emissive.rgb;
-  vec3 linear = light( L, V, N, diffuse_color.rgb, roughness, metallicness, ambient, emissive, push_constants.light_energy );
+  vec3 linear = light( L, V, N, diffuse_color.rgb, roughness, metallicness, ambient, emissive, dynamic_uniforms.light_energy );
   output_color = vec4( gamma(linear), diffuse_color.a );
 }
 

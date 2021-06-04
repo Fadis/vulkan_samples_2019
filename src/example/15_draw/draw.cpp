@@ -129,7 +129,13 @@ int main( int argc, const char *argv[] ) {
           .setDescriptorCount( 1 )
           .setBinding( 5 )
           .setStageFlags( vk::ShaderStageFlagBits::eFragment )
-          .setPImmutableSamplers( nullptr )
+          .setPImmutableSamplers( nullptr ),
+        vk::DescriptorSetLayoutBinding() // dynamic uniform
+          .setDescriptorType( vk::DescriptorType::eUniformBuffer )
+          .setDescriptorCount( 1 )
+          .setBinding( 7 )
+          .setStageFlags( vk::ShaderStageFlagBits::eVertex|vk::ShaderStageFlagBits::eFragment )
+          .setPImmutableSamplers( nullptr ),
       }
     );
     std::vector< vw::render_pass_t > render_pass;
@@ -141,6 +147,16 @@ int main( int argc, const char *argv[] ) {
       context, framebuffer.size(), 1u
     );
     std::vector< std::vector< viewer::texture_t > > extra_textures;
+    std::vector< viewer::buffer_t > dynamic_uniform_buffer;
+    for( size_t i = 0u; i != framebuffer.size(); ++i )
+      dynamic_uniform_buffer.emplace_back(
+        viewer::create_uniform_buffer( context, sizeof( viewer::dynamic_uniforms_t ) )
+      );
+    std::vector< viewer::buffer_t > temporary_dynamic_uniform_buffer;
+    for( size_t i = 0u; i != framebuffer.size(); ++i )
+      temporary_dynamic_uniform_buffer.emplace_back(
+        viewer::create_staging_buffer( context, sizeof( viewer::dynamic_uniforms_t ) )
+      );
     viewer::document_t document = viewer::load_gltf(
       context,
       render_pass,
@@ -148,7 +164,8 @@ int main( int argc, const char *argv[] ) {
       framebuffer.size(),
       config.shader,
       config.shader_mask,
-      extra_textures
+      extra_textures,
+      dynamic_uniform_buffer
     );
     auto center = ( document.node.min + document.node.max ) / 2.f;
     auto scale = std::abs( glm::length( document.node.max - document.node.min ) );
@@ -210,6 +227,22 @@ int main( int argc, const char *argv[] ) {
         vk::CommandBufferBeginInfo()
           .setFlags( vk::CommandBufferUsageFlagBits::eOneTimeSubmit )
       );
+      auto dynamic_uniform = viewer::dynamic_uniforms_t()
+        .set_projection_matrix( projection )
+        .set_camera_matrix( lookat )
+        .set_light_matrix( projection )
+        .set_eye_pos( glm::vec4( camera_pos, 1.0 ) )
+        .set_light_pos( glm::vec4( light_pos, 1.0 ) )
+        .set_light_energy( light_energy );
+      vw::transfer_buffer(
+        context, 
+        gcb,
+        reinterpret_cast< uint8_t* >( &dynamic_uniform ),
+        reinterpret_cast< uint8_t* >( &dynamic_uniform ) + sizeof( viewer::dynamic_uniforms_t ),
+        temporary_dynamic_uniform_buffer[ current_frame ].buffer,
+        dynamic_uniform_buffer[ current_frame ].buffer
+      );
+      vw::barrier_buffer( *gcb, dynamic_uniform_buffer[ current_frame ].buffer );
       auto const pass_info = vk::RenderPassBeginInfo()
         .setRenderPass( *render_pass[ 0 ].render_pass )
         .setFramebuffer( *fb.framebuffer )
@@ -226,11 +259,6 @@ int main( int argc, const char *argv[] ) {
         document.mesh,
         document.buffer,
         current_frame,
-        projection,
-        lookat,
-        camera_pos,
-        light_pos,
-        light_energy,
         0u
       );
       gcb->endRenderPass();

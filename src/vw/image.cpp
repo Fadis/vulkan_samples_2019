@@ -99,6 +99,93 @@ namespace vw {
       }
     );
   }
+  void transfer_image_internal(
+    vk::UniqueHandle< vk::CommandBuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > &commands,
+    bool mipmap,
+    buffer_t &temporary,
+    image_t &destination
+  ) {
+    //if( destination.size != temporary.size ) vk::throwResultException( vk::Result( result ), "destinationとtemporaryのサイズが合わない" );
+    uint32_t mipmap_count = 1u;
+    if( mipmap && destination.width == destination.height && is_pot( destination.width ) ) {
+      mipmap_count = get_pot( destination.width );
+    }
+    convert_image( *commands, destination, 0, mipmap_count, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal );
+    commands->copyBufferToImage(
+      *temporary.buffer,
+      *destination.image,
+      vk::ImageLayout::eTransferDstOptimal,
+      {
+        vk::BufferImageCopy()
+          .setBufferOffset( vk::DeviceSize( 0 ) )
+          .setImageSubresource(
+            vk::ImageSubresourceLayers()
+              .setAspectMask( vk::ImageAspectFlagBits::eColor )
+              .setMipLevel( 0 )
+              .setLayerCount( 1 )
+          )
+          .setImageExtent(
+            vk::Extent3D()
+              .setWidth( destination.width )
+              .setHeight( destination.height )
+              .setDepth( 1 )
+          )
+      }
+    );
+    uint32_t mip_width = destination.width;
+    uint32_t mip_height = destination.height;
+    convert_image( *commands, destination, 0, 1, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal );
+    for( uint32_t i = 1u; i < mipmap_count; ++i ) {
+      commands->blitImage(
+        *destination.image, vk::ImageLayout::eTransferSrcOptimal,
+        *destination.image, vk::ImageLayout::eTransferDstOptimal,
+        {
+          vk::ImageBlit()
+            .setSrcSubresource(
+              vk::ImageSubresourceLayers()
+                .setAspectMask( vk::ImageAspectFlagBits::eColor )
+                .setBaseArrayLayer( 0 )
+                .setLayerCount( 1 )
+                .setMipLevel( i - 1 )
+            )
+            .setSrcOffsets( {
+              vk::Offset3D( 0, 0, 0 ),
+              vk::Offset3D( mip_width, mip_height, 1 ),
+            } )
+            .setDstSubresource(
+              vk::ImageSubresourceLayers()
+                .setAspectMask( vk::ImageAspectFlagBits::eColor )
+                .setBaseArrayLayer( 0 )
+                .setLayerCount( 1 )
+                .setMipLevel( i )
+            )
+            .setDstOffsets( {
+              vk::Offset3D( 0, 0, 0 ),
+              vk::Offset3D( mip_width / 2, mip_height / 2, 1 ),
+            } )
+        },
+        vk::Filter::eLinear
+      );
+      convert_image( *commands, destination, i, 1, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal );
+      mip_width /= 2;
+      mip_height /= 2;
+    }
+    convert_image( *commands, destination, 0, mipmap_count, vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal );
+    /*auto graphics_queue = context.device->getQueue( context.graphics_queue_index, 0 );
+    auto submit_info =
+      vk::SubmitInfo()
+        .setCommandBufferCount( 1 )
+        .setPCommandBuffers( &*commands );
+    if( wait_for )
+      submit_info
+        .setWaitSemaphoreCount( 1 )
+        .setPWaitSemaphores( &*wait_for );
+    if( signal_to )
+      submit_info
+        .setSignalSemaphoreCount( 1 )
+        .setPSignalSemaphores( &*signal_to );
+    graphics_queue.submit( submit_info, vk::Fence() );*/
+  }
   image_t load_image(
     const context_t &context,
     const std::string &filename,
@@ -138,15 +225,9 @@ namespace vw {
         .setInitialLayout( vk::ImageLayout::eUndefined ),
         VMA_MEMORY_USAGE_GPU_ONLY
     );
-    auto temporary = get_buffer(
+    auto temporary = create_staging_buffer(
       context,
-      vk::BufferCreateInfo()
-        .setSize( spec.width * spec.height * 4 )
-        .setUsage( vk::BufferUsageFlagBits::eTransferSrc )
-        .setSharingMode( vk::SharingMode::eExclusive )
-        .setQueueFamilyIndexCount( 0 )
-        .setPQueueFamilyIndices( nullptr ),
-        VMA_MEMORY_USAGE_CPU_TO_GPU
+      spec.width * spec.height * 4
     );
     {
       void* mapped_memory;
@@ -160,89 +241,27 @@ namespace vw {
       );
       texture_file->read_image( TypeDesc::UINT8, mapped.get() );
       if( spec.nchannels == 3 ) {
+        std::vector< uint8_t > temp( spec.width * spec.height * 4u  );
+        texture_file->read_image( TypeDesc::UINT8, temp.data() );
         for( size_t i = spec.width * spec.height - 1; i; --i ) {
-          mapped.get()[ i * 4 ] = mapped.get()[ i * spec.nchannels ];
-          mapped.get()[ i * 4 + 1 ] = mapped.get()[ i * spec.nchannels + 1 ];
-          mapped.get()[ i * 4 + 2 ] = mapped.get()[ i * spec.nchannels + 2 ];
-          mapped.get()[ i * 4 + 3 ] = 255u;
+          temp[ i * 4 ] = temp[ i * spec.nchannels ];
+          temp[ i * 4 + 1 ] = temp[ i * spec.nchannels + 1 ];
+          temp[ i * 4 + 2 ] = temp[ i * spec.nchannels + 2 ];
+          temp[ i * 4 + 3 ] = 255u;
         }
+        std::copy( temp.begin(), temp.end(), mapped.get() );
+      }
+      else {
+        texture_file->read_image( TypeDesc::UINT8, mapped.get() );
       }
     }
-    auto commands = get_command_buffer( context, true );
+    vk::UniqueHandle< vk::CommandBuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > commands =
+      get_command_buffer( context, true );
     commands->begin(
       vk::CommandBufferBeginInfo()
         .setFlags( vk::CommandBufferUsageFlagBits::eOneTimeSubmit )
     );
-    convert_image( *commands, final_image, 0, mipmap_count, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal );
-    commands->copyBufferToImage(
-      *temporary.buffer,
-      *final_image.image,
-      vk::ImageLayout::eTransferDstOptimal,
-      {
-        vk::BufferImageCopy()
-          .setBufferOffset( vk::DeviceSize( 0 ) )
-          .setImageSubresource(
-            vk::ImageSubresourceLayers()
-              .setAspectMask( vk::ImageAspectFlagBits::eColor )
-              .setMipLevel( 0 )
-              .setLayerCount( 1 )
-          )
-          .setImageExtent(
-            vk::Extent3D()
-              .setWidth( spec.width )
-              .setHeight( spec.height )
-              .setDepth( spec.depth )
-          )
-      }
-    );
-    uint32_t mip_width = spec.width;
-    uint32_t mip_height = spec.height;
-    convert_image( *commands, final_image, 0, 1, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal );
-    for( uint32_t i = 1u; i < mipmap_count; ++i ) {
-      commands->blitImage(
-        *final_image.image, vk::ImageLayout::eTransferSrcOptimal,
-        *final_image.image, vk::ImageLayout::eTransferDstOptimal,
-        {
-          vk::ImageBlit()
-            .setSrcSubresource(
-              vk::ImageSubresourceLayers()
-                .setAspectMask( vk::ImageAspectFlagBits::eColor )
-                .setBaseArrayLayer( 0 )
-                .setLayerCount( 1 )
-                .setMipLevel( i - 1 )
-            )
-            .setSrcOffsets( {
-              vk::Offset3D( 0, 0, 0 ),
-              vk::Offset3D( mip_width, mip_height, 1 ),
-            } )
-            .setDstSubresource(
-              vk::ImageSubresourceLayers()
-                .setAspectMask( vk::ImageAspectFlagBits::eColor )
-                .setBaseArrayLayer( 0 )
-                .setLayerCount( 1 )
-                .setMipLevel( i )
-            )
-            .setDstOffsets( {
-              vk::Offset3D( 0, 0, 0 ),
-              vk::Offset3D( mip_width / 2, mip_height / 2, 1 ),
-            } )
-        },
-        vk::Filter::eLinear
-      );
-      convert_image( *commands, final_image, i, 1, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal );
-      mip_width /= 2;
-      mip_height /= 2;
-    }
-    convert_image( *commands, final_image, 0, mipmap_count, vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal );
-    commands->end();
-    auto graphics_queue = context.device->getQueue( context.graphics_queue_index, 0 );
-    graphics_queue.submit(
-    vk::SubmitInfo()
-      .setCommandBufferCount( 1 )
-      .setPCommandBuffers( &*commands ),
-      vk::Fence()
-    );
-    graphics_queue.waitIdle();
+    transfer_image_internal( commands, mipmap, temporary, final_image );
     final_image.set_image_view(
       context.device->createImageViewUnique(
         vk::ImageViewCreateInfo()
@@ -259,6 +278,15 @@ namespace vw {
           )
       )
     );
+    commands->end();
+    auto graphics_queue = context.device->getQueue( context.graphics_queue_index, 0 );
+    graphics_queue.submit(
+    vk::SubmitInfo()
+      .setCommandBufferCount( 1 )
+      .setPCommandBuffers( &*commands ),
+      vk::Fence()
+    );
+    graphics_queue.waitIdle();
     return final_image;
   }
   void dump_image(

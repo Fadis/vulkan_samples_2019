@@ -34,7 +34,7 @@ echo world_bc_mr_em.frag
 cat world_bc_mr_em.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_mr_em.frag.spv --target-env=vulkan1.2 -
 echo world_bc_mr_oc_em.frag
 cat world_bc_mr_oc_em.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_mr_oc_em.frag.spv --target-env=vulkan1.2 -
-echo world_mc_oc_em.frag
+echo world_bc_oc_em.frag
 cat world_bc_oc_em.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_bc_oc_em.frag.spv --target-env=vulkan1.2 -
 echo world_mr_oc_em.frag
 cat world_mr_oc_em.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o world_mr_oc_em.frag.spv --target-env=vulkan1.2 -
@@ -227,6 +227,8 @@ echo special3.frag
 cat special3.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special3.frag.spv --target-env=vulkan1.2 -
 echo special4.frag
 cat special4.frag|${GLSLI}|${GLSLC} -fshader-stage=frag -o special4.frag.spv --target-env=vulkan1.2 -
+echo special5.vert
+cat special5.vert|${GLSLI}|${GLSLC} -fshader-stage=vert -o special5.vert.spv --target-env=vulkan1.2 -
 
 echo add.comp
 cat add.comp|${GLSLI}|${GLSLC} -fshader-stage=comp -o add.comp.spv --target-env=vulkan1.2 -

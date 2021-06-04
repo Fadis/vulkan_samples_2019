@@ -15,8 +15,8 @@ void main()  {
   mat3 ts = transpose( mat3( tangent, binormal, normal ) );
   vec3 pos = input_position.xyz;
   vec3 N = vec3( 0, 0, 1 );
-  vec3 V = ts * normalize(push_constants.eye_pos.xyz-pos);
-  vec3 L = ts * normalize(push_constants.light_pos.xyz-pos);
+  vec3 V = ts * normalize(dynamic_uniforms.eye_pos.xyz-pos);
+  vec3 L = ts * normalize(dynamic_uniforms.light_pos.xyz-pos);
   vec4 diffuse_color = vec4( 1.0, 1.0, 1.0, 1.0 );
   vec3 linear = diffuse_color.rgb * ( max( dot( L, N ), 0 ) /pi );
   output_color = vec4( gamma(linear), diffuse_color.a );

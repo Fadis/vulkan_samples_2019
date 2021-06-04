@@ -39,7 +39,8 @@ namespace viewer {
     const textures_t &textures,
     uint32_t swapchain_size,
     int shader_mask,
-    const std::vector< std::vector< viewer::texture_t > > &extra_textures
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   ) {
     if( primitive.material < 0 || doc.materials.size() <= size_t( primitive.material ) ) throw vw::invalid_gltf( "参照されたmaterialが存在しない", __FILE__, __LINE__ );
     const auto &material = doc.materials[ primitive.material ];
@@ -133,7 +134,7 @@ namespace viewer {
     if( fs == shader.end() ) {
       throw vw::invalid_gltf( "必要なシェーダがない", __FILE__, __LINE__ );
     }
-    auto shadow_vs = shader.find( shader_flag_t( shader_flag_t::vertex ) );
+    auto shadow_vs = shader.find( shader_flag_t( int( shader_flag_t::vertex )|int(shader_flag_t::special) | 5 ) );
     auto shadow_fs = shader.find( shader_flag_t( int( shader_flag_t::fragment )|int(shader_flag_t::special) | 4 ) );
     std::cout << "fs_flag : " << int(fs_flag) << std::endl;
     std::vector< vw::pipeline_t > pipelines;
@@ -219,6 +220,11 @@ namespace viewer {
           .setBuffer( *uniform_buffer.buffer.buffer )
           .setOffset( 0u )
           .setRange( sizeof( uniforms_t ) );
+      auto dynamic_uniform_buffer_info =
+        vk::DescriptorBufferInfo()
+          .setBuffer( *dynamic_uniform_buffer[ i ].buffer.buffer )
+          .setOffset( 0u )
+          .setRange( sizeof( dynamic_uniforms_t ) );
       
       std::vector< vk::WriteDescriptorSet > updates {
         vk::WriteDescriptorSet()
@@ -227,6 +233,12 @@ namespace viewer {
           .setDescriptorCount( 1 )
           .setPBufferInfo( &uniform_buffer_info )
           .setDstBinding( 0 ),
+        vk::WriteDescriptorSet()
+          .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+          .setDescriptorType( vk::DescriptorType::eUniformBuffer )
+          .setDescriptorCount( 1 )
+          .setPBufferInfo( &dynamic_uniform_buffer_info )
+          .setDstBinding( 7 ),
       };
       const auto bct = material.pbrMetallicRoughness.baseColorTexture.index;
       if( bct >= 0 ) {
@@ -337,7 +349,8 @@ namespace viewer {
     const textures_t &textures,
     uint32_t swapchain_size,
     int shader_mask,
-    const std::vector< std::vector< viewer::texture_t > > &extra_textures
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   ) {
     if( index < 0 || doc.meshes.size() <= size_t( index ) ) throw vw::invalid_gltf( "参照されたmeshが存在しない", __FILE__, __LINE__ );
     const auto &mesh = doc.meshes[ index ];
@@ -363,7 +376,8 @@ namespace viewer {
         textures,
         swapchain_size,
         shader_mask,
-        extra_textures
+        extra_textures,
+        dynamic_uniform_buffer
       ) );
       min[ 0 ] = std::min( min[ 0 ], mesh_.primitive.back().min[ 0 ] );
       min[ 1 ] = std::min( min[ 1 ], mesh_.primitive.back().min[ 1 ] );
@@ -385,11 +399,12 @@ namespace viewer {
     const textures_t &textures,
     uint32_t swapchain_size,
     int shader_mask,
-    const std::vector< std::vector< viewer::texture_t > > &extra_textures
+    const std::vector< std::vector< viewer::texture_t > > &extra_textures,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   ) {
     meshes_t mesh;
     for( uint32_t i = 0; i != doc.meshes.size(); ++i )
-      mesh.push_back( create_mesh( doc, i, context, render_pass, push_constant_size, shader, textures, swapchain_size, shader_mask, extra_textures ) );
+      mesh.push_back( create_mesh( doc, i, context, render_pass, push_constant_size, shader, textures, swapchain_size, shader_mask, extra_textures, dynamic_uniform_buffer ) );
     return mesh;
   }
 }

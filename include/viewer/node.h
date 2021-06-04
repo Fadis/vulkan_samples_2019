@@ -66,11 +66,6 @@ namespace viewer {
     const meshes_t &meshes,
     const buffers_t &buffers,
     uint32_t current_frame,
-    const glm::mat4 &projection,
-    const glm::mat4 &lookat,
-    const glm::vec3 &camera_pos,
-    const glm::vec3 &light_pos,
-    float light_energy,
     uint32_t pipeline_index
   );
 }

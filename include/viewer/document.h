@@ -59,7 +59,8 @@ namespace viewer {
     uint32_t swapchain_size,
     const std::filesystem::path &shader_dir,
     int shader_mask,
-    const std::vector< std::vector< viewer::texture_t > >&
+    const std::vector< std::vector< viewer::texture_t > >&,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   );
 }
 #endif

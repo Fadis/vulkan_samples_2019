@@ -26,6 +26,24 @@
 namespace viewer {
   buffer_t create_uniform_buffer(
     const vw::context_t &context,
+    size_t size
+  ) {
+    return buffer_t()
+      .set_buffer(
+        vw::create_uniform_buffer( context, size )
+      );
+  }
+  buffer_t create_staging_buffer(
+    const vw::context_t &context,
+    size_t size
+  ) {
+    return buffer_t()
+      .set_buffer(
+        vw::create_staging_buffer( context, size )
+      );
+  }
+  buffer_t create_uniform_buffer(
+    const vw::context_t &context,
     const std::vector< uint8_t > &data
   ) {
     return buffer_t()

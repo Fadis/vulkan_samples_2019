@@ -85,14 +85,18 @@ namespace viewer {
   };
   struct push_constants_t {
     LIBSTAMP_SETTER( world_matrix )
+    glm::mat4 world_matrix;
+  };
+  struct dynamic_uniforms_t {
     LIBSTAMP_SETTER( projection_matrix )
     LIBSTAMP_SETTER( camera_matrix )
+    LIBSTAMP_SETTER( light_matrix )
     LIBSTAMP_SETTER( eye_pos )
     LIBSTAMP_SETTER( light_pos )
     LIBSTAMP_SETTER( light_energy )
-    glm::mat4 world_matrix;
     glm::mat4 projection_matrix;
     glm::mat4 camera_matrix;
+    glm::mat4 light_matrix;
     glm::vec4 eye_pos;
     glm::vec4 light_pos;
     float light_energy;
@@ -116,7 +120,8 @@ namespace viewer {
     const textures_t &textures,
     uint32_t swapchain_size,
     int shader_mask,
-    const std::vector< std::vector< viewer::texture_t > >&
+    const std::vector< std::vector< viewer::texture_t > >&,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   );
   meshes_t create_mesh(
     const fx::gltf::Document &doc,
@@ -127,7 +132,8 @@ namespace viewer {
     const textures_t &textures,
     uint32_t swapchain_size,
     int shader_mask,
-    const std::vector< std::vector< viewer::texture_t > >&
+    const std::vector< std::vector< viewer::texture_t > >&,
+    const std::vector< buffer_t > &dynamic_uniform_buffer
   );
 }
 #endif

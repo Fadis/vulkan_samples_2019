@@ -21,10 +21,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vulkan/vulkan.hpp>
 #include <vw/context.h>
+#include <vw/buffer.h>
+#include <vw/exceptions.h>
 namespace vw {
   struct image_t {
     image_t() : width( 0 ), height( 0 ) {}
@@ -59,6 +62,38 @@ namespace vw {
     const std::string &filename,
     unsigned int mipmap
   );
+  void transfer_image_internal(
+    vk::UniqueHandle< vk::CommandBuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > &commands,
+    bool mipmap,
+    buffer_t &temporary,
+    image_t &destination
+  );
+  template< typename Iterator >
+  void transfer_image(
+    const context_t &context,
+    vk::UniqueHandle< vk::CommandBuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > &commands,
+    bool mipmap,
+    Iterator begin, Iterator end,
+    buffer_t &temporary,
+    image_t &destination
+  ) {
+    if( temporary.size != std::distance( begin, end ) ) throw invalid_argument( "dataとtemporaryのサイズが合わない" );
+    {
+      void* mapped_memory;
+      const auto result = vmaMapMemory( *context.allocator, *temporary.allocation, &mapped_memory );
+      if( result != VK_SUCCESS ) vk::throwResultException( vk::Result( result ), "バッファをマップできない" );
+      std::shared_ptr< uint8_t > mapped(
+        reinterpret_cast< uint8_t* >( mapped_memory ),
+        [allocator=context.allocator,allocation=temporary.allocation]( uint8_t *p ) {
+          if( p ) vmaUnmapMemory( *allocator, *allocation );
+        }
+      );
+      std::cout << __FILE__ << " " << __LINE__ << std::endl;
+      std::copy( begin, end, mapped.get() );
+      std::cout << __FILE__ << " " << __LINE__ << std::endl;
+    }
+    transfer_image_internal( commands, mipmap, temporary, destination );
+  }
 }
 #endif
 
