@@ -25,17 +25,8 @@ void main() {
   vec4 pos = push_constants.world_matrix * local_pos;
   output_position = pos;
   vec4 local_normal = vec4( input_normal.xyz, 1.0 );
-  vec4 normal = vec4(
-    normalize( ( push_constants.world_matrix * local_normal ).xyz ),
-    1.0
-  );
-  output_normal = normalize( ( normal ).xyz );
-  vec4 local_tangent = vec4( input_tangent.xyz, 1.0 );
-  vec4 tangent = vec4(
-    normalize( ( push_constants.world_matrix * local_tangent ).xyz ),
-      1.0
-  );
-  output_tangent = normalize( ( tangent ).xyz );
+  output_normal = normalize( ( mat3(push_constants.world_matrix) * input_normal ) );
+  output_tangent = normalize( ( mat3(push_constants.world_matrix) * input_tangent.xyz ) );
   output_tex_coord = input_texcoord0;
   gl_Position =
     dynamic_uniforms.projection_matrix *
