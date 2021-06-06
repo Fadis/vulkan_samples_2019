@@ -102,7 +102,7 @@ namespace viewer {
     if( index < 0 || doc.scenes.size() <= size_t( index ) ) throw vw::invalid_gltf( "参照されたsceneが存在しない", __FILE__, __LINE__ );
     const auto &scene = doc.scenes[ index ];
     node_t root;
-    root.set_matrix( glm::mat4(1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1) );
+    root.set_matrix( glm::mat4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1) );
     glm::vec3 min(
       std::numeric_limits< float >::max(),
       std::numeric_limits< float >::max(),
