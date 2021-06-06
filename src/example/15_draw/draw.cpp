@@ -190,7 +190,7 @@ int main( int argc, const char *argv[] ) {
     float camera_angle = 0;//M_PI;
     auto speed = 0.01f*scale;
     auto light_pos = glm::vec3{ 0.0f*scale, 1.2f*scale, 0.0f*scale };
-    float light_energy = 1.0f;
+    float light_energy = 5.0f;
     while( !context.input_state->quit ) {
       if( context.input_state->a ) camera_angle += 0.01 * M_PI/2;
       if( context.input_state->d ) camera_angle -= 0.01 * M_PI/2;
@@ -199,8 +199,8 @@ int main( int argc, const char *argv[] ) {
       if( context.input_state->s ) camera_pos -= camera_direction * glm::vec3( speed );
       if( context.input_state->e ) camera_pos[ 1 ] += speed;
       if( context.input_state->c ) camera_pos[ 1 ] -= speed;
-      if( context.input_state->j ) light_energy += 0.01f;
-      if( context.input_state->k ) light_energy -= 0.01f;
+      if( context.input_state->j ) light_energy += 0.05f;
+      if( context.input_state->k ) light_energy -= 0.05f;
       if( context.input_state->up ) light_pos[ 2 ] += speed;
       if( context.input_state->down ) light_pos[ 2 ] -= speed;
       if( context.input_state->left ) light_pos[ 0 ] -= speed;
