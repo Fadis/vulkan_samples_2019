@@ -52,6 +52,7 @@
 #include <vw/buffer.h>
 #include <vw/wait_for_idle.h>
 #include <vw/command_buffer.h>
+#include <vw/projection.h>
 #include <viewer/document.h>
 
 
@@ -149,7 +150,7 @@ int main( int argc, const char *argv[] ) {
     render_pass.emplace_back( vw::create_render_pass( context, false, false ) );
     std::vector< std::vector< vw::framebuffer_t > > framebuffers;
     framebuffers.emplace_back( vw::create_framebuffer(
-      context, render_pass[ 0 ], 512u, 512u
+      context, render_pass[ 0 ], 1024u, 1024u
     ) );
     framebuffers.emplace_back( vw::create_framebuffer(
       context, render_pass[ 1 ]
@@ -187,7 +188,8 @@ int main( int argc, const char *argv[] ) {
       config.shader,
       config.shader_mask,
       extra_textures,
-      dynamic_uniform_buffer
+      dynamic_uniform_buffer,
+      float( context.width )/float( context.height )
     );
     auto center = ( document.node.min + document.node.max ) / 2.f;
     auto scale = std::abs( glm::length( document.node.max - document.node.min ) );
@@ -212,18 +214,37 @@ int main( int argc, const char *argv[] ) {
       );
       scissor.emplace_back( vk::Rect2D( vk::Offset2D(0, 0), vk::Extent2D( fb[ 0 ].width, fb[ 0 ].height ) ) );
     }
-    std::cout << scale << std::endl;
-    const std::vector< glm::mat4 > projection{
-      glm::perspective( 30.f, (float(framebuffers[ 0 ][ 0 ].width)/float(framebuffers[ 0 ][ 0 ].height)), std::min(0.3f*scale,0.5f), 10.f*scale ),
-      glm::perspective( 30.f, (float(framebuffers[ 1 ][ 0 ].width)/float(framebuffers[ 1 ][ 0 ].height)), std::min(0.3f*scale,0.5f), 10.f*scale )
+    auto lhrh = glm::mat4(-1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1);
+    std::vector< glm::mat4 > projection{
+      lhrh * glm::perspective( 0.39959648408210363f , (float(framebuffers[ 0 ][ 0 ].width)/float(framebuffers[ 0 ][ 0 ].height)), std::min(0.1f*scale,0.5f), 10.f*scale ),
+      glm::perspective( 0.39959648408210363f, (float(framebuffers[ 1 ][ 0 ].width)/float(framebuffers[ 1 ][ 0 ].height)), std::min(0.1f*scale,0.5f), 1.4f*scale )
     };
     auto camera_pos = center + glm::vec3{ 0.f, 0.f, 1.0f*scale };
+    auto camera_dir = center + glm::vec3{ 0.f, 0.f, 0.f };
+    const auto cameras = viewer::get_cameras(
+      document.node,
+      document.camera
+    );
+    if( !cameras.empty() ) {
+      //projection[ 1 ] = cameras[ 0 ].projection_matrix;
+      camera_pos = cameras[ 0 ].camera_pos;
+      camera_dir = cameras[ 0 ].camera_direction + camera_pos;
+    }
     float camera_angle = 0;//M_PI;
     auto speed = 0.01f*scale;
     auto light_pos = glm::vec3{ 0.0f*scale, 1.2f*scale, 0.0f*scale };
     float light_energy = 5.0f;
+    const auto point_lights = viewer::get_point_lights(
+      document.node,
+      document.point_light
+    );
+    if( !point_lights.empty() ) {
+      light_energy = point_lights[ 0 ].intensity / ( 4 * M_PI ) / 100;
+      light_pos = point_lights[ 0 ].location;
+    }
     bool snapped = false;
     uint32_t global_current_frame = 0u;
+    bool light_space = config.light;
     while( !context.input_state->quit ) {
       if( context.input_state->a ) camera_angle += 0.01 * M_PI/2;
       if( context.input_state->d ) camera_angle -= 0.01 * M_PI/2;
@@ -238,9 +259,13 @@ int main( int argc, const char *argv[] ) {
       if( context.input_state->down ) light_pos[ 2 ] -= speed;
       if( context.input_state->left ) light_pos[ 0 ] -= speed;
       if( context.input_state->right ) light_pos[ 0 ] += speed;
+      if( context.input_state->n ) light_pos[ 1 ] -= speed;
+      if( context.input_state->u ) light_pos[ 1 ] += speed;
+      if( context.input_state->g ) light_space = !config.light;
+      if( !context.input_state->g ) light_space = config.light;
       glm::mat4 lookat = glm::lookAt(
         camera_pos,
-        camera_pos + camera_direction,
+        camera_pos + camera_direction /*camera_pos - camera_dir*/,
         glm::vec3{ 0.f, camera_pos[ 1 ] + 100.f*scale, 0.f }
       );
       const auto begin_time = std::chrono::high_resolution_clock::now();
@@ -258,6 +283,18 @@ int main( int argc, const char *argv[] ) {
         dump_image( context, framebuffers[ 0 ][ current_frame % 3 ].color_image, "hoge.png", 0 );
       }
       auto image_index = context.device->acquireNextImageKHR( *context.swapchain, UINT64_MAX, *fe.image_acquired_semaphore, vk::Fence() );
+      auto [light_projection_matrix,light_view_matrix,light_znear,light_zfar] = vw::get_light_matrix(
+        projection[ 1 ],
+        lookat,
+        light_pos,
+        camera_pos,
+        1.0f
+      );
+      /*auto [light_projection_matrix,light_view_matrix,light_znear,light_zfar] = vw::get_aabb_light_matrix(
+        document.node.min,
+        document.node.max,
+        light_pos
+      );*/
       for( size_t i = 0u; i != framebuffers.size(); ++i ) {
         auto &fb = framebuffers[ i ][ image_index.value ];
         auto &gcb = command_buffer[ current_frame * framebuffers.size() + i ];
@@ -266,13 +303,18 @@ int main( int argc, const char *argv[] ) {
           vk::CommandBufferBeginInfo()
             .setFlags( vk::CommandBufferUsageFlagBits::eOneTimeSubmit )
         );
+        if( i == 0u ) {
+          gcb->setDepthBias( 1.25f, 0.f, 1.75f );
+        }
         auto dynamic_uniform = viewer::dynamic_uniforms_t()
-          .set_projection_matrix( projection[ 1 ] )
-          .set_camera_matrix( lookat )
-          .set_light_matrix( projection[ 0 ] )
+          .set_projection_matrix( lhrh * ( light_space ? light_projection_matrix : projection[ 1 ] ) )
+          .set_camera_matrix( light_space ? light_view_matrix : lookat )
+          .set_light_vp_matrix0( lhrh*light_projection_matrix*light_view_matrix )
           .set_eye_pos( glm::vec4( camera_pos, 1.0 ) )
           .set_light_pos( glm::vec4( light_pos, 1.0 ) )
-          .set_light_energy( light_energy );
+          .set_light_energy( light_energy )
+          .set_light_znear( light_znear )
+          .set_light_zfar( light_zfar );
         vw::transfer_buffer(
           context, 
           gcb,

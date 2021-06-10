@@ -29,6 +29,8 @@
 #include <vw/context.h>
 #include <viewer/buffer.h>
 #include <viewer/mesh.h>
+#include <viewer/light.h>
+#include <viewer/camera.h>
 namespace viewer {
   struct node_t {
     node_t() : has_mesh( false ), mesh( 0 ) {}
@@ -39,11 +41,19 @@ namespace viewer {
     LIBSTAMP_SETTER( mesh )
     LIBSTAMP_SETTER( min )
     LIBSTAMP_SETTER( max )
+    LIBSTAMP_SETTER( has_light )
+    LIBSTAMP_SETTER( light )
+    LIBSTAMP_SETTER( has_camera )
+    LIBSTAMP_SETTER( camera )
     glm::mat4 matrix;
     std::vector< node_t > children;
     fx::gltf::Node gltf;
     bool has_mesh;
     int32_t mesh;
+    bool has_light;
+    int32_t light;
+    bool has_camera;
+    int32_t camera;
     glm::vec3 min;
     glm::vec3 max;
   };
@@ -67,6 +77,14 @@ namespace viewer {
     const buffers_t &buffers,
     uint32_t current_frame,
     uint32_t pipeline_index
+  );
+  point_lights_t get_point_lights(
+    const node_t &node,
+    const point_lights_t &lights
+  );
+  cameras_t get_cameras(
+    const node_t &node,
+    const cameras_t &cameras
   );
 }
 #endif

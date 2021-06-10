@@ -12,6 +12,7 @@ layout (location = 3) in vec2 input_texcoord0;
 layout (location = 0) out vec4 output_position;
 layout (location = 1) out vec3 output_normal;
 layout (location = 3) out vec2 output_tex_coord;
+layout (location = 4) out vec4 output_shadow0;
 
 out gl_PerVertex
 {
@@ -25,5 +26,6 @@ void main() {
   output_normal = normalize( ( mat3(push_constants.world_matrix) * input_normal ) );
   output_tex_coord = input_texcoord0;
   gl_Position = dynamic_uniforms.projection_matrix * dynamic_uniforms.camera_matrix * pos;
+  output_shadow0 = dynamic_uniforms.light_vp_matrix0 * pos;
 }
 

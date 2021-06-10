@@ -34,7 +34,8 @@ namespace vw {
     const std::vector< vk::VertexInputBindingDescription > &vertex_input_binding,
     const std::vector< vk::VertexInputAttributeDescription > &vertex_input_attribute,
     bool cull,
-    bool blend
+    bool blend,
+    bool back_side
   ) {
     pipeline_t pipeline;
     const std::vector< vk::PushConstantRange > push_constant_range{
@@ -78,9 +79,9 @@ namespace vw {
       .setDepthClampEnable( VK_FALSE )
       .setRasterizerDiscardEnable( VK_FALSE )
       .setPolygonMode( vk::PolygonMode::eFill )
-      .setCullMode( cull ? vk::CullModeFlagBits::eBack : vk::CullModeFlagBits::eNone )
+      .setCullMode( cull ? ( back_side ? vk::CullModeFlagBits::eFront : vk::CullModeFlagBits::eBack ) : vk::CullModeFlagBits::eNone )
       .setFrontFace( vk::FrontFace::eCounterClockwise )
-      .setDepthBiasEnable( VK_FALSE )
+      .setDepthBiasEnable( back_side ? VK_TRUE : VK_FALSE )
       .setLineWidth( 1.0f );
     const auto multisample_info = vk::PipelineMultisampleStateCreateInfo();
     const auto stencil_op = vk::StencilOpState()

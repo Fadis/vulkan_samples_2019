@@ -90,16 +90,26 @@ namespace viewer {
   struct dynamic_uniforms_t {
     LIBSTAMP_SETTER( projection_matrix )
     LIBSTAMP_SETTER( camera_matrix )
-    LIBSTAMP_SETTER( light_matrix )
+    LIBSTAMP_SETTER( light_vp_matrix0 )
+    LIBSTAMP_SETTER( light_vp_matrix1 )
+    LIBSTAMP_SETTER( light_vp_matrix2 )
+    LIBSTAMP_SETTER( light_vp_matrix3 )
     LIBSTAMP_SETTER( eye_pos )
     LIBSTAMP_SETTER( light_pos )
     LIBSTAMP_SETTER( light_energy )
+    LIBSTAMP_SETTER( light_znear )
+    LIBSTAMP_SETTER( light_zfar )
     glm::mat4 projection_matrix;
     glm::mat4 camera_matrix;
-    glm::mat4 light_matrix;
+    glm::mat4 light_vp_matrix0;
+    glm::mat4 light_vp_matrix1;
+    glm::mat4 light_vp_matrix2;
+    glm::mat4 light_vp_matrix3;
     glm::vec4 eye_pos;
     glm::vec4 light_pos;
     float light_energy;
+    float light_znear;
+    float light_zfar;
   };
   struct mesh_t {
     LIBSTAMP_SETTER( primitive )

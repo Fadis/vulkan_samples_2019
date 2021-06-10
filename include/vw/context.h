@@ -54,6 +54,9 @@ namespace vw {
       c( false ),
       j( false ),
       k( false ),
+      n( false ),
+      u( false ),
+      g( false ),
       up( false ),
       down( false ),
       left( false ),
@@ -67,6 +70,9 @@ namespace vw {
     bool c;
     bool j;
     bool k;
+    bool n;
+    bool u;
+    bool g;
     bool up;
     bool down;
     bool left;

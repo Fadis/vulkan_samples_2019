@@ -41,7 +41,8 @@ namespace vw {
     const std::vector< vk::VertexInputBindingDescription > &vertex_input_binding,
     const std::vector< vk::VertexInputAttributeDescription > &vertex_input_attribute,
     bool cull,
-    bool blend
+    bool blend,
+    bool back_side
   );
 }
 #endif

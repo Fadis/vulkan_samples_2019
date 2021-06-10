@@ -36,6 +36,7 @@ namespace vw {
     std::string input;
     std::string shader;
     bool purple = false;
+    bool light = false;
     int shader_mask = 0;
     desc.add_options()
       ( "help,h", "show this message" )
@@ -48,6 +49,7 @@ namespace vw {
       ( "purple,p", po::bool_switch( &purple ), "make background purple" )
       ( "shader,s", po::value< std::string >(&shader)->default_value( "../shaders/" ), "shader dir" )
       ( "shader_mask,m", po::value< int >(&shader_mask)->default_value( 0 ), "shader mask" )
+      ( "light,g", po::bool_switch(&light), "render from light space" )
       ( "input,i", po::value< std::string >(&input)->default_value( "hoge.gltf" ), "glTF file path" );
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -88,6 +90,7 @@ namespace vw {
         .set_direct( vm.count( "direct" ) )
         .set_input( std::move( input ) )
         .set_purple( purple )
+        .set_light( light )
         .set_shader( std::move( shader ) )
         .set_shader_mask( shader_mask );
     }

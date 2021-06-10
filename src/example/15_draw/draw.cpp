@@ -73,7 +73,8 @@ int main( int argc, const char *argv[] ) {
     {
       VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME,
       VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-      VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME
+      VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME,
+      VK_KHR_MAINTENANCE1_EXTENSION_NAME
     }, {}
   ) ) {
     std::cout << "指定された条件に合うデバイスは無かった" << std::endl;
@@ -86,7 +87,8 @@ int main( int argc, const char *argv[] ) {
       {
         VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME,
+        VK_KHR_MAINTENANCE1_EXTENSION_NAME
       },
       {},
       {
@@ -165,7 +167,8 @@ int main( int argc, const char *argv[] ) {
       config.shader,
       config.shader_mask,
       extra_textures,
-      dynamic_uniform_buffer
+      dynamic_uniform_buffer,
+      float( context.width )/float( context.height )
     );
     auto center = ( document.node.min + document.node.max ) / 2.f;
     auto scale = std::abs( glm::length( document.node.max - document.node.min ) );
@@ -180,17 +183,27 @@ int main( int argc, const char *argv[] ) {
     auto const viewport =
       vk::Viewport()
         .setWidth( context.width )
-        .setHeight( context.height )
+        .setHeight( int( context.height ) )
         .setMinDepth( 0.0f )
         .setMaxDepth( 1.0f );
     vk::Rect2D const scissor( vk::Offset2D(0, 0), vk::Extent2D( context.width, context.height ) );
     std::cout << scale << std::endl;
-    const glm::mat4 projection = glm::perspective( 30.f, (float(context.width)/float(context.height)), std::min(0.1f*scale,0.5f), 150.f*scale );
+    auto lhrh = glm::mat4(-1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1);
+    const glm::mat4 projection = lhrh * glm::perspective( 0.39959648408210363f, (float(context.width)/float(context.height)), std::min(0.1f*scale,0.5f), 150.f*scale );
     auto camera_pos = center + glm::vec3{ 0.f, 0.f, 1.0f*scale };
     float camera_angle = 0;//M_PI;
     auto speed = 0.01f*scale;
     auto light_pos = glm::vec3{ 0.0f*scale, 1.2f*scale, 0.0f*scale };
     float light_energy = 5.0f;
+    const auto point_lights = viewer::get_point_lights(
+      document.node,
+      document.point_light
+    );
+    if( !point_lights.empty() ) {
+      light_energy = point_lights[ 0 ].intensity / ( 4 * M_PI ) / 100;
+      light_pos = point_lights[ 0 ].location;
+      std::cout << light_energy << " " << light_pos[ 0 ] << " " << light_pos[ 1 ] << " " << light_pos[ 2 ] << std::endl;
+    }
     while( !context.input_state->quit ) {
       if( context.input_state->a ) camera_angle += 0.01 * M_PI/2;
       if( context.input_state->d ) camera_angle -= 0.01 * M_PI/2;
@@ -230,7 +243,6 @@ int main( int argc, const char *argv[] ) {
       auto dynamic_uniform = viewer::dynamic_uniforms_t()
         .set_projection_matrix( projection )
         .set_camera_matrix( lookat )
-        .set_light_matrix( projection )
         .set_eye_pos( glm::vec4( camera_pos, 1.0 ) )
         .set_light_pos( glm::vec4( light_pos, 1.0 ) )
         .set_light_energy( light_energy );

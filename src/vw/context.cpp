@@ -44,6 +44,9 @@ namespace vw {
       else if( key == GLFW_KEY_C && action == GLFW_PRESS ) input_state->c = true;
       else if( key == GLFW_KEY_J && action == GLFW_PRESS ) input_state->j = true;
       else if( key == GLFW_KEY_K && action == GLFW_PRESS ) input_state->k = true;
+      else if( key == GLFW_KEY_N && action == GLFW_PRESS ) input_state->n = true;
+      else if( key == GLFW_KEY_U && action == GLFW_PRESS ) input_state->u = true;
+      else if( key == GLFW_KEY_G && action == GLFW_PRESS ) input_state->g = true;
       else if( key == GLFW_KEY_W && action == GLFW_RELEASE ) input_state->w = false;
       else if( key == GLFW_KEY_A && action == GLFW_RELEASE ) input_state->a = false;
       else if( key == GLFW_KEY_S && action == GLFW_RELEASE ) input_state->s = false;
@@ -52,6 +55,9 @@ namespace vw {
       else if( key == GLFW_KEY_C && action == GLFW_RELEASE ) input_state->c = false;
       else if( key == GLFW_KEY_J && action == GLFW_RELEASE ) input_state->j = false;
       else if( key == GLFW_KEY_K && action == GLFW_RELEASE ) input_state->k = false;
+      else if( key == GLFW_KEY_N && action == GLFW_RELEASE ) input_state->n = false;
+      else if( key == GLFW_KEY_U && action == GLFW_RELEASE ) input_state->u = false;
+      else if( key == GLFW_KEY_G && action == GLFW_RELEASE ) input_state->g = false;
       else if( key == GLFW_KEY_UP && action == GLFW_PRESS ) input_state->up = true;
       else if( key == GLFW_KEY_DOWN && action == GLFW_PRESS ) input_state->down = true;
       else if( key == GLFW_KEY_LEFT && action == GLFW_PRESS ) input_state->left = true;

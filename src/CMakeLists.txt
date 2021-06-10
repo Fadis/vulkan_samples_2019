@@ -17,6 +17,7 @@ add_library( vw SHARED
   vw/sampler.cpp
   vw/node.cpp
   vw/command_buffer.cpp
+  vw/projection.cpp
 )
 target_link_libraries(
   vw
@@ -35,6 +36,8 @@ add_library( viewer SHARED
   viewer/node.cpp
   viewer/document.cpp
   viewer/shader.cpp
+  viewer/light.cpp
+  viewer/camera.cpp
 )
 target_link_libraries(
   viewer

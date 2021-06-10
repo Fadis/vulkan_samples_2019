@@ -136,7 +136,6 @@ namespace viewer {
     }
     auto shadow_vs = shader.find( shader_flag_t( int( shader_flag_t::vertex )|int(shader_flag_t::special) | 5 ) );
     auto shadow_fs = shader.find( shader_flag_t( int( shader_flag_t::fragment )|int(shader_flag_t::special) | 4 ) );
-    std::cout << "fs_flag : " << int(fs_flag) << std::endl;
     std::vector< vw::pipeline_t > pipelines;
     for( const auto &r: render_pass ) {
       if( r.shadow )
@@ -146,7 +145,8 @@ namespace viewer {
             vertex_input_binding,
             vertex_input_attribute,
             !material.doubleSided,
-            material.alphaMode == fx::gltf::Material::AlphaMode::Blend
+            material.alphaMode == fx::gltf::Material::AlphaMode::Blend,
+            true
           )
         );
       else
@@ -156,7 +156,8 @@ namespace viewer {
             vertex_input_binding,
             vertex_input_attribute,
             !material.doubleSided,
-            material.alphaMode == fx::gltf::Material::AlphaMode::Blend
+            material.alphaMode == fx::gltf::Material::AlphaMode::Blend,
+            false
           )
         );
     }
@@ -318,7 +319,6 @@ namespace viewer {
         );
       }
       if( extra_textures.size() == swapchain_size && extra_textures[ i ].size() >= 1u ) {
-        std::cout << "mesh" << std::endl;
         updates.push_back(
           vk::WriteDescriptorSet()
             .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
