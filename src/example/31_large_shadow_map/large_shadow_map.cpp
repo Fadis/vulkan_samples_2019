@@ -245,7 +245,7 @@ int main( int argc, const char *argv[] ) {
     bool snapped = false;
     uint32_t global_current_frame = 0u;
     bool light_space = config.light;
-    float light_size = 0.1f;
+    float light_size = 0.1;
     while( !context.input_state->quit ) {
       if( context.input_state->a ) camera_angle += 0.01 * M_PI/2;
       if( context.input_state->d ) camera_angle -= 0.01 * M_PI/2;
@@ -284,11 +284,18 @@ int main( int argc, const char *argv[] ) {
         dump_image( context, framebuffers[ 0 ][ current_frame % 3 ].color_image, "hoge.png", 0 );
       }
       auto image_index = context.device->acquireNextImageKHR( *context.swapchain, UINT64_MAX, *fe.image_acquired_semaphore, vk::Fence() );
-      auto [light_projection_matrix,light_view_matrix,light_znear,light_zfar,light_frustum_width] = vw::get_aabb_light_matrix(
+      auto [light_projection_matrix,light_view_matrix,light_znear,light_zfar,light_frustum_width] = vw::get_light_matrix(
+        projection[ 1 ],
+        lookat,
+        light_pos,
+        camera_pos,
+        1.0f
+      );
+      /*auto [light_projection_matrix,light_view_matrix,light_znear,light_zfar] = vw::get_aabb_light_matrix(
         document.node.min,
         document.node.max,
         light_pos
-      );
+      );*/
       for( size_t i = 0u; i != framebuffers.size(); ++i ) {
         auto &fb = framebuffers[ i ][ image_index.value ];
         auto &gcb = command_buffer[ current_frame * framebuffers.size() + i ];

@@ -46,13 +46,13 @@ namespace vw {
     ) / float(std::distance( range.begin(), range.end() ) );
   }
   
-  std::tuple< glm::mat4, glm::mat4, float, float > get_aabb_light_matrix(
+  std::tuple< glm::mat4, glm::mat4, float, float, float > get_aabb_light_matrix(
     const glm::vec3 &min,
     const glm::vec3 &max,
     const glm::vec3 &light_pos
   );
 
-  std::tuple< glm::mat4, glm::mat4, float, float > get_light_matrix(
+  std::tuple< glm::mat4, glm::mat4, float, float, float > get_light_matrix(
     const glm::mat4 &camera_projection_matrix,
     const glm::mat4 &camera_view_matrix,
     const glm::vec3 &light_pos,
@@ -60,7 +60,7 @@ namespace vw {
     float depth_offset
   );
 
-  std::pair< glm::mat4, glm::mat4 > get_perspective_light_matrix(
+  std::tuple< glm::mat4, glm::mat4, float, float, float > get_perspective_light_matrix(
     const glm::mat4 &camera_projection_matrix,
     const glm::mat4 &camera_view_matrix,
     const glm::vec3 &light_pos,

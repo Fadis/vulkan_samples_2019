@@ -23,5 +23,7 @@ layout(binding = 7) uniform DynamicUniforms {
   float light_energy;
   float light_znear;
   float light_zfar;
+  float light_frustum_width;
+  float light_size;
 } dynamic_uniforms;
 

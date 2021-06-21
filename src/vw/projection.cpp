@@ -54,7 +54,7 @@ namespace vw {
     };
   }
 
-  std::tuple< glm::mat4, glm::mat4, float, float > get_aabb_light_matrix(
+  std::tuple< glm::mat4, glm::mat4, float, float, float > get_aabb_light_matrix(
     const glm::vec3 &min,
     const glm::vec3 &max,
     const glm::vec3 &light_pos
@@ -85,7 +85,7 @@ namespace vw {
       if( znear > -v[ 2 ] ) znear = -v[ 2 ];
     }
     znear *= 0.5f;
-    zfar *= 0.5f;
+    //zfar *= 0.5f;
     for( auto &v: world ) v = v*( -znear/v[ 2 ] );
     float left = std::numeric_limits< float >::max();
     float right = std::numeric_limits< float >::min();
@@ -105,13 +105,13 @@ namespace vw {
     return std::make_tuple(
       std::move( light_projection_matrix ),
       std::move( light_view_matrix ),
-      znear, zfar
+      znear, zfar, w*2
     );
   }
 
 
 
-  std::tuple< glm::mat4, glm::mat4, float, float > get_light_matrix(
+  std::tuple< glm::mat4, glm::mat4, float, float, float > get_light_matrix(
     const glm::mat4 &camera_projection_matrix,
     const glm::mat4 &camera_view_matrix,
     const glm::vec3 &light_pos_,
@@ -172,27 +172,14 @@ namespace vw {
     std::cout << "camera_pos " << glm::to_string( camera_pos ) << std::endl; 
     std::cout << "znear " << znear << " zfar "  << zfar << " " << w << " " << h <<  std::endl;
     std::cout << "debug " << glm::to_string( light_pos ) << " " << glm::to_string( center ) << std::endl;
-    auto light_view_matrix2 = glm::lookAt(
-      light_pos,
-      glm::vec3( 0.f, 0.f, 0.f ),
-      up1
-      /*glm::vec3( 0.f, 100.f, 0.f ),
-      glm::vec3( 18.f, 7.f, -19.f ),
-      glm::vec3( 0.f, 0.f, 1000.f )*/
-    );
-    auto light_projection_matrix2 = glm::perspective(
-      std::atan( h/znear )*2, w/h, znear, zfar*1.1f
-    );
-    light_projection_matrix * light_view_matrix;
-    light_projection_matrix2 * light_view_matrix2;
     return std::make_tuple(
       std::move( light_projection_matrix ),
       std::move( light_view_matrix ),
-      znear, zfar
+      znear, zfar, w*2
     );
   }
 
-  std::pair< glm::mat4, glm::mat4 > get_perspective_light_matrix(
+  std::tuple< glm::mat4, glm::mat4, float, float, float > get_perspective_light_matrix(
     const glm::mat4 &camera_projection_matrix,
     const glm::mat4 &camera_view_matrix,
     const glm::vec3 &light_pos,
@@ -233,12 +220,17 @@ namespace vw {
       if( top < v[ 1 ] ) top = v[ 1 ];
       if( bottom > v[ 1 ] ) bottom = v[ 1 ];
     }
+    znear *= 0.5f;
+    zfar *= 2.0f;
+    auto w = std::max( std::abs( left ), std::abs( right ) );
+    auto h = std::max( std::abs( bottom ), std::abs( top ) );
     auto light_projection_matrix = glm::frustum(
-      left, right, bottom, top, ( znear*depth_offset ), zfar
+      -w, w, -h, h, znear, zfar
     );
-    return std::make_pair(
+    return std::make_tuple(
       std::move( light_projection_matrix ),
-      std::move( light_view_matrix )
+      std::move( light_view_matrix ),
+      znear, zfar, w*2
     );
   }
 }

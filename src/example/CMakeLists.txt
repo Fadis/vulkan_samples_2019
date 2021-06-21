@@ -20,5 +20,7 @@ subdirs(
   	16_device_group
   	17_timeline_semaphore
   	30_shadow_map
+  	31_large_shadow_map
+    #    53_vsm
 )
 

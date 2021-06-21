@@ -99,6 +99,8 @@ namespace viewer {
     LIBSTAMP_SETTER( light_energy )
     LIBSTAMP_SETTER( light_znear )
     LIBSTAMP_SETTER( light_zfar )
+    LIBSTAMP_SETTER( light_frustum_width )
+    LIBSTAMP_SETTER( light_size )
     glm::mat4 projection_matrix;
     glm::mat4 camera_matrix;
     glm::mat4 light_vp_matrix0;
@@ -110,6 +112,8 @@ namespace viewer {
     float light_energy;
     float light_znear;
     float light_zfar;
+    float light_frustum_width;
+    float light_size;
   };
   struct mesh_t {
     LIBSTAMP_SETTER( primitive )
