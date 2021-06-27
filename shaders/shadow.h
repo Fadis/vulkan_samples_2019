@@ -1,4 +1,7 @@
-layout(binding = 6) uniform sampler2D shadow;
+layout(binding = 6) uniform sampler2D shadow0;
+layout(binding = 8) uniform sampler2D shadow1;
+layout(binding = 9) uniform sampler2D shadow2;
+layout(binding = 10) uniform sampler2D shadow3;
 
 int poisson_disk_sample_count = 12;
 vec2 poisson_disk[12]=vec2[](
@@ -33,7 +36,7 @@ float pcf( vec3 light_proj_pos, float light_size, float frustum_size, float bias
   float receiver_distance = light_proj_pos.z - bias;
   for( int i = 0; i < poisson_disk_sample_count; i++ ) {
     vec2 offset = ( rot * poisson_disk[ i ] ) * uv_light_size;
-    float occluder_distance = texture( shadow, light_proj_pos.xy + offset ).r;
+    float occluder_distance = texture( shadow0, light_proj_pos.xy + offset ).r;
     sum += ( occluder_distance < receiver_distance ) ? 1 : 0;
   }
   return sum / poisson_disk_sample_count; /////
@@ -47,7 +50,7 @@ float pcss( vec3 light_proj_pos, float light_size, float frustum_size, float zne
   int occluder_count = 0;
   for( int i = 0; i < poisson_disk_sample_count; i++ ) {
     vec2 offset = ( rot * poisson_disk[ i ] ) * uv_light_size;
-    float occluder_distance = texture( shadow, ( light_proj_pos.xy * 0.5 + 0.5 ) + offset ).r;
+    float occluder_distance = texture( shadow0, ( light_proj_pos.xy * 0.5 + 0.5 ) + offset ).r;
     if( occluder_distance < receiver_distance ) {
       occluder_count++;
       average_occluder_distance += occluder_distance;
@@ -60,7 +63,7 @@ float pcss( vec3 light_proj_pos, float light_size, float frustum_size, float zne
   float sum = 0;
   for( int i = 0; i < poisson_disk_sample_count; i++ ) {
     vec2 offset = ( rot * poisson_disk[ i ] ) * uv_filter_size;
-    float occluder_distance = texture( shadow, ( light_proj_pos.xy * 0.5 + 0.5 ) + offset ).r;
+    float occluder_distance = texture( shadow0, ( light_proj_pos.xy * 0.5 + 0.5 ) + offset ).r;
     sum += ( occluder_distance < receiver_distance ) ? 1 : 0;
   }
   return sum / poisson_disk_sample_count;
@@ -84,7 +87,7 @@ float simple_shadow( vec4 pos ) {
   vec4 proj_pos = pos;
   proj_pos /= proj_pos.w;
   //return pcss( proj_pos.xyz, dynamic_uniforms.light_size, dynamic_uniforms.light_frustum_width, dynamic_uniforms.light_znear, 0.001 );
-  float shadow_distance = max( ( texture( shadow, proj_pos.xy * 0.5 + 0.5 ).r ), 0.0 );
+  float shadow_distance = max( ( texture( shadow0, proj_pos.xy * 0.5 + 0.5 ).r ), 0.0 );
 //  if( shadow_distance == 0.f ) return 0.0;
   float distance = proj_pos.z - 0.001;
   if( shadow_distance < distance ) return 1.0;

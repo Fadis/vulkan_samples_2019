@@ -45,6 +45,20 @@ namespace vw {
       glm::vec3( 0 )
     ) / float(std::distance( range.begin(), range.end() ) );
   }
+
+  float logarithmetic_split(
+    float i,
+    float count,
+    float near,
+    float far
+  );
+  float practical_split(
+    float i,
+    float count,
+    float near,
+    float far,
+    float a
+  );
   
   std::tuple< glm::mat4, glm::mat4, float, float, float > get_aabb_light_matrix(
     const glm::vec3 &min,
@@ -60,11 +74,32 @@ namespace vw {
     float depth_offset
   );
 
+  std::tuple< glm::mat4, glm::mat4, float, float, float > get_projection_light_matrix(
+    const glm::mat4 &camera_projection_matrix,
+    const glm::mat4 &camera_view_matrix,
+    const glm::vec3 &min,
+    const glm::vec3 &max,
+    const glm::vec3 &light_pos,
+    float
+  );
+  
+  glm::mat4 get_l(
+    const glm::mat4 &camera_projection_matrix,
+    const glm::mat4 &camera_view_matrix,
+    const glm::mat4 &light_projection_matrix,
+    const glm::mat4 &light_view_matrix
+  );
+
+  glm::mat4 get_w(
+    float near
+  );
+
   std::tuple< glm::mat4, glm::mat4, float, float, float > get_perspective_light_matrix(
     const glm::mat4 &camera_projection_matrix,
     const glm::mat4 &camera_view_matrix,
-    const glm::vec3 &light_pos,
-    float depth_offset
+    const glm::vec3 &min,
+    const glm::vec3 &max,
+    const glm::vec3 &light_pos
   );
 }
 

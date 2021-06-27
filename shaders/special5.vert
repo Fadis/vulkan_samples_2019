@@ -15,6 +15,17 @@ out gl_PerVertex
 void main() {
   vec4 local_pos = vec4( input_position.xyz, 1.0 );
   vec4 pos = push_constants.world_matrix * local_pos;
-  gl_Position = dynamic_uniforms.light_vp_matrix0 * pos;
+  if( push_constants.fid == 0 ) {
+    gl_Position = dynamic_uniforms.light_vp_matrix0 * pos;
+  }
+  else if( push_constants.fid == 1 ) {
+    gl_Position = dynamic_uniforms.light_vp_matrix1 * pos;
+  }
+  else if( push_constants.fid == 2 ) {
+    gl_Position = dynamic_uniforms.light_vp_matrix2 * pos;
+  }
+  else {
+    gl_Position = dynamic_uniforms.light_vp_matrix3 * pos;
+  }
 }
 

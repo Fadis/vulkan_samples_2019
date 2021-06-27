@@ -170,7 +170,8 @@ namespace viewer {
       for( const auto &primitive: mesh.primitive ) {
         commands.bindPipeline( vk::PipelineBindPoint::eGraphics, *primitive.pipeline[ pipeline_index ].pipeline );
         auto pc = push_constants_t()
-          .set_world_matrix( node.matrix );
+          .set_world_matrix( node.matrix )
+          .set_fid( pipeline_index );
         commands.pushConstants( *primitive.pipeline[ pipeline_index ].pipeline_layout, vk::ShaderStageFlagBits::eVertex|vk::ShaderStageFlagBits::eFragment, 0, sizeof( push_constants_t ), &pc );
         std::vector< vk::DescriptorSet > descriptor_set;
         descriptor_set.reserve( primitive.descriptor_set[ current_frame ].descriptor_set.size() );

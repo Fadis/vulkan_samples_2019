@@ -328,6 +328,36 @@ namespace viewer {
             .setDstBinding( 6 )
         );
       }
+      if( extra_textures.size() == swapchain_size && extra_textures[ i ].size() >= 2u ) {
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &extra_textures[ i ][ 1 ].unorm )
+            .setDstBinding( 8 )
+        );
+      }
+      if( extra_textures.size() == swapchain_size && extra_textures[ i ].size() >= 3u ) {
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &extra_textures[ i ][ 2 ].unorm )
+            .setDstBinding( 9 )
+        );
+      }
+      if( extra_textures.size() == swapchain_size && extra_textures[ i ].size() >= 4u ) {
+        updates.push_back(
+          vk::WriteDescriptorSet()
+            .setDstSet( *descriptor_set.back().descriptor_set[ 0 ] )
+            .setDescriptorType( vk::DescriptorType::eCombinedImageSampler )
+            .setDescriptorCount( 1 )
+            .setPImageInfo( &extra_textures[ i ][ 3 ].unorm )
+            .setDstBinding( 10 )
+        );
+      }
       context.device->updateDescriptorSets( updates, nullptr );
     }
     primitive_.set_descriptor_set( descriptor_set ); 

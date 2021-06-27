@@ -21,6 +21,9 @@ subdirs(
   	17_timeline_semaphore
   	30_shadow_map
   	31_large_shadow_map
+  	32_psm
+  	33_lispsm
+    34_pssm
     #    53_vsm
 )
 

@@ -1,5 +1,6 @@
 layout(push_constant) uniform PushConstants {
   mat4 world_matrix;
+  int fid;
 } push_constants;
 
 layout(binding = 0) uniform Uniforms {

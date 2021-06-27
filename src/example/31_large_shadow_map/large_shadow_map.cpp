@@ -216,8 +216,8 @@ int main( int argc, const char *argv[] ) {
     }
     auto lhrh = glm::mat4(-1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1);
     std::vector< glm::mat4 > projection{
-      lhrh * glm::perspective( 0.39959648408210363f , (float(framebuffers[ 0 ][ 0 ].width)/float(framebuffers[ 0 ][ 0 ].height)), std::min(0.1f*scale,0.5f), 10.f*scale ),
-      glm::perspective( 0.39959648408210363f, (float(framebuffers[ 1 ][ 0 ].width)/float(framebuffers[ 1 ][ 0 ].height)), std::min(0.1f*scale,0.5f), 1.4f*scale )
+      lhrh * glm::perspective( 0.39959648408210363f , (float(framebuffers[ 1 ][ 0 ].width)/float(framebuffers[ 1 ][ 0 ].height)), std::min(0.1f*scale,0.5f), 0.5f*scale ),
+      glm::perspective( 0.39959648408210363f, (float(framebuffers[ 1 ][ 0 ].width)/float(framebuffers[ 1 ][ 0 ].height)), std::min(0.1f*scale,0.5f), 1.5f*scale )
     };
     auto camera_pos = center + glm::vec3{ 0.f, 0.f, 1.0f*scale };
     auto camera_dir = center + glm::vec3{ 0.f, 0.f, 0.f };
@@ -284,13 +284,16 @@ int main( int argc, const char *argv[] ) {
         dump_image( context, framebuffers[ 0 ][ current_frame % 3 ].color_image, "hoge.png", 0 );
       }
       auto image_index = context.device->acquireNextImageKHR( *context.swapchain, UINT64_MAX, *fe.image_acquired_semaphore, vk::Fence() );
-      auto [light_projection_matrix,light_view_matrix,light_znear,light_zfar,light_frustum_width] = vw::get_light_matrix(
+      auto [light_projection_matrix,light_view_matrix,light_znear,light_zfar,light_frustum_width] = vw::get_projection_light_matrix(
         projection[ 1 ],
         lookat,
+        document.node.min,
+        document.node.max,
         light_pos,
-        camera_pos,
         1.0f
       );
+      std::cout << "lpm : " << glm::to_string( light_projection_matrix ) << std::endl;
+      std::cout << "lvm : " << glm::to_string( light_view_matrix ) << std::endl;
       /*auto [light_projection_matrix,light_view_matrix,light_znear,light_zfar] = vw::get_aabb_light_matrix(
         document.node.min,
         document.node.max,

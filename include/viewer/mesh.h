@@ -85,7 +85,9 @@ namespace viewer {
   };
   struct push_constants_t {
     LIBSTAMP_SETTER( world_matrix )
+    LIBSTAMP_SETTER( fid )
     glm::mat4 world_matrix;
+    int32_t fid;
   };
   struct dynamic_uniforms_t {
     LIBSTAMP_SETTER( projection_matrix )
