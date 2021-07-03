@@ -310,7 +310,8 @@ int main( int argc, const char *argv[] ) {
           .set_light_znear( light_znear )
           .set_light_zfar( light_zfar )
           .set_light_frustum_width( light_frustum_width )
-          .set_light_size( light_size );
+          .set_light_size( light_size )
+          .set_shadow_mode( 0 );
         vw::transfer_buffer(
           context, 
           gcb,

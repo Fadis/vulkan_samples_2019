@@ -132,8 +132,17 @@ namespace vw {
           )
       }
     );
-    uint32_t mip_width = destination.width;
-    uint32_t mip_height = destination.height;
+    //uint32_t mip_width = destination.width;
+    //uint32_t mip_height = destination.height;
+    if( mipmap && destination.width == destination.height && is_pot( destination.width ) ) {
+      create_mipmap(
+        commands,
+        destination,
+        vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::eShaderReadOnlyOptimal
+      );
+    }
+/*
     convert_image( *commands, destination, 0, 1, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal );
     for( uint32_t i = 1u; i < mipmap_count; ++i ) {
       commands->blitImage(
@@ -171,6 +180,7 @@ namespace vw {
       mip_height /= 2;
     }
     convert_image( *commands, destination, 0, mipmap_count, vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::eShaderReadOnlyOptimal );
+    */
     /*auto graphics_queue = context.device->getQueue( context.graphics_queue_index, 0 );
     auto submit_info =
       vk::SubmitInfo()
@@ -288,6 +298,54 @@ namespace vw {
     );
     graphics_queue.waitIdle();
     return final_image;
+  }
+  void create_mipmap(
+    vk::UniqueHandle< vk::CommandBuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > &commands,
+    const image_t &image,
+    vk::ImageLayout from,
+    vk::ImageLayout to
+  ) {
+    unsigned int mip_width  = image.width;
+    unsigned int mip_height = image.height;
+    unsigned int mipmap_count = get_pot( image.width );
+    convert_image( *commands, image, 0, 1, from, vk::ImageLayout::eTransferSrcOptimal );
+    convert_image( *commands, image, 1, mipmap_count - 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal );
+    for( uint32_t i = 1u; i < mipmap_count; ++i ) {
+      commands->blitImage(
+        *image.image, vk::ImageLayout::eTransferSrcOptimal,
+        *image.image, vk::ImageLayout::eTransferDstOptimal,
+        {
+          vk::ImageBlit()
+            .setSrcSubresource(
+              vk::ImageSubresourceLayers()
+                .setAspectMask( vk::ImageAspectFlagBits::eColor )
+                .setBaseArrayLayer( 0 )
+                .setLayerCount( 1 )
+                .setMipLevel( i - 1 )
+            )
+            .setSrcOffsets( {
+              vk::Offset3D( 0, 0, 0 ),
+              vk::Offset3D( mip_width, mip_height, 1 ),
+            } )
+            .setDstSubresource(
+              vk::ImageSubresourceLayers()
+                .setAspectMask( vk::ImageAspectFlagBits::eColor )
+                .setBaseArrayLayer( 0 )
+                .setLayerCount( 1 )
+                .setMipLevel( i )
+            )
+            .setDstOffsets( {
+              vk::Offset3D( 0, 0, 0 ),
+              vk::Offset3D( mip_width / 2, mip_height / 2, 1 ),
+            } )
+        },
+        vk::Filter::eLinear
+      );
+      convert_image( *commands, image, i, 1, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal );
+      mip_width /= 2;
+      mip_height /= 2;
+    }
+    convert_image( *commands, image, 0, mipmap_count, vk::ImageLayout::eTransferSrcOptimal, to );
   }
   void dump_image(
     const context_t &context,

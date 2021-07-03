@@ -26,5 +26,6 @@ layout(binding = 7) uniform DynamicUniforms {
   float light_zfar;
   float light_frustum_width;
   float light_size;
+  int shadow_mode;
 } dynamic_uniforms;
 

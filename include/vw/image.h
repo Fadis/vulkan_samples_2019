@@ -44,6 +44,7 @@ namespace vw {
     unsigned int height;
     vk::Format format;
   };
+  uint32_t get_pot( uint32_t v );
   image_t get_image(
     const context_t &context,
     const vk::ImageCreateInfo &image_create_info,
@@ -55,6 +56,12 @@ namespace vw {
     vk::ImageUsageFlagBits usage,
     bool mipmap,
     bool srgb
+  );
+  void create_mipmap(
+    vk::UniqueHandle< vk::CommandBuffer, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE > &commands,
+    const image_t &image,
+    vk::ImageLayout from,
+    vk::ImageLayout to
   );
   void dump_image(
     const context_t &context,

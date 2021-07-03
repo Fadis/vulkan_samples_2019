@@ -231,6 +231,7 @@ int main( int argc, const char *argv[] ) {
       camera_dir = cameras[ 0 ].camera_direction + camera_pos;
     }
     float camera_angle = 0;//M_PI;
+    float vertical_camera_angle = 0;
     auto speed = 0.01f*scale;
     auto light_pos = glm::vec3{ 0.0f*scale, 1.2f*scale, 0.0f*scale };
     float light_energy = 5.0f;
@@ -249,7 +250,9 @@ int main( int argc, const char *argv[] ) {
     while( !context.input_state->quit ) {
       if( context.input_state->a ) camera_angle += 0.01 * M_PI/2;
       if( context.input_state->d ) camera_angle -= 0.01 * M_PI/2;
-      glm::vec3 camera_direction( std::sin( camera_angle ), 0, -std::cos( camera_angle ) );
+      if( context.input_state->r ) vertical_camera_angle += 0.01;
+      if( context.input_state->v ) vertical_camera_angle -= 0.01;
+      glm::vec3 camera_direction( std::sin( camera_angle ), vertical_camera_angle, -std::cos( camera_angle ) );
       if( context.input_state->w ) camera_pos += camera_direction * glm::vec3( speed );
       if( context.input_state->s ) camera_pos -= camera_direction * glm::vec3( speed );
       if( context.input_state->e ) camera_pos[ 1 ] += speed;
@@ -318,7 +321,8 @@ int main( int argc, const char *argv[] ) {
           .set_light_znear( light_znear )
           .set_light_zfar( light_zfar )
           .set_light_frustum_width( light_frustum_width )
-          .set_light_size( light_size );
+          .set_light_size( light_size )
+          .set_shadow_mode( 0 );
         vw::transfer_buffer(
           context, 
           gcb,

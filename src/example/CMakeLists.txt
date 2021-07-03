@@ -24,6 +24,9 @@ subdirs(
   	32_psm
   	33_lispsm
     34_pssm
+    35_pcf
+    36_pcss
+    37_vsm
     #    53_vsm
 )
 

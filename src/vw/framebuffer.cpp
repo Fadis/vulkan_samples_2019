@@ -80,7 +80,7 @@ namespace vw {
   std::vector< framebuffer_t > create_framebuffer(
     const context_t &context,
     const render_pass_t &render_pass,
-    uint32_t width, uint32_t height
+    uint32_t width, uint32_t height, bool enable_mip
   ) {
     std::vector< framebuffer_t > framebuffers;
     for( size_t i = 0u; i != context.device->getSwapchainImagesKHR( *context.swapchain ).size(); ++i ) {
@@ -91,9 +91,9 @@ namespace vw {
           .setImageType( vk::ImageType::e2D )
           .setFormat( vk::Format::eR32G32B32A32Sfloat )
           .setExtent( { width, height, 1 } )
-          .setMipLevels( 1 )
+          .setMipLevels( enable_mip ? get_pot( width ) : 1 )
           .setArrayLayers( 1 )
-          .setUsage( vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc ),
+          .setUsage( vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc |  vk::ImageUsageFlagBits::eTransferDst ),
         VMA_MEMORY_USAGE_GPU_ONLY
       ) );
       framebuffers.back().color_image.set_image_view(
@@ -106,7 +106,7 @@ namespace vw {
               vk::ImageSubresourceRange()
                 .setAspectMask( vk::ImageAspectFlagBits::eColor )
                 .setBaseMipLevel( 0 )
-                .setLevelCount( 1 )
+                .setLevelCount( enable_mip ? get_pot( width ) : 1 )
                 .setBaseArrayLayer( 0 )
                 .setLayerCount( 1 )
             )

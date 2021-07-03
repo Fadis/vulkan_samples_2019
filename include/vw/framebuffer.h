@@ -61,7 +61,7 @@ namespace vw {
   std::vector< framebuffer_t > create_framebuffer(
     const context_t &context,
     const render_pass_t &render_pass,
-    uint32_t width, uint32_t height
+    uint32_t width, uint32_t height, bool enable_mip = false
   );
   std::vector< framebuffer_fence_t > create_framebuffer_fences(
     const context_t &context,
