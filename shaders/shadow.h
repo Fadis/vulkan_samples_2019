@@ -82,7 +82,7 @@ float vsm( vec3 light_proj_pos, float light_size, float frustum_size, float znea
   float variance = v.y - d2;
   float md = receiver_distance - v.x;
   float p = variance / ( variance + ( md * md ) );
-  if( v.x > receiver_distance - bias ) return 0.0;
+  //if( v.x > receiver_distance - bias ) return 0.0;
   return clamp( 1.0 - p, 0.0, 1.0 );
 }
 
@@ -93,21 +93,82 @@ float simple_shadow( vec3 proj_pos, float bias ) {
   else return 0.0;
 }
 
-float shadow( vec4 pos ) {
-  vec4 proj_pos = pos;
-  proj_pos /= proj_pos.w;
+float logarithmic_split(
+  float i,
+  float count,
+  float near,
+  float far
+) {
+  return near * pow( ( far / near ), ( i / count ) );
+}
+
+float practical_split(
+  float i,
+  float count,
+  float near,
+  float far,
+  float a
+) {
+ return a * logarithmic_split( i, count, near, far ) + ( 1.0 - a ) * ( near + i / count * ( far - near ) );
+}
+
+float pssm( vec3 proj_pos0, vec3 proj_pos1, vec3 proj_pos2, vec3 proj_pos3, float depth, float split_bias, float depth_bias ) {
+  //float n = dynamic_uniforms.projection_matrix[3].z/(0.0 * 2.0 - 1.0 + dynamic_uniforms.projection_matrix[2].z);
+  //float f = dynamic_uniforms.projection_matrix[3].z/(1.0 * 2.0 - 1.0 + dynamic_uniforms.projection_matrix[2].z);
+  //float split0 = practical_split( 1.0, 4.0, n, f, split_bias );
+  //float split1 = practical_split( 2.0, 4.0, n, f, split_bias );
+  //float split2 = practical_split( 3.0, 4.0, n, f, split_bias );
+  if( abs( proj_pos0.x ) < 1.0 && abs( proj_pos0.y ) < 1.0 && abs( proj_pos0.z ) < 1.0 ) {
+    float shadow_distance = max( ( texture( shadow0, proj_pos0.xy * 0.5 + 0.5 ).r ), 0.0 );
+    float distance = proj_pos0.z - depth_bias;
+    if( shadow_distance < distance ) return 1.0;
+    else return 0.0;
+  }
+  else if( abs( proj_pos1.x ) < 1.0 && abs( proj_pos1.y ) < 1.0 && abs( proj_pos1.z ) < 1.0 ) {
+    float shadow_distance = max( ( texture( shadow1, proj_pos1.xy * 0.5 + 0.5 ).r ), 0.0 );
+    float distance = proj_pos1.z - depth_bias;
+    if( shadow_distance < distance ) return 1.0;
+    else return 0.0;
+  }
+  else if( abs( proj_pos2.x ) < 1.0 && abs( proj_pos2.y ) < 1.0 && abs( proj_pos2.z ) < 1.0 ) {
+    float shadow_distance = max( ( texture( shadow2, proj_pos2.xy * 0.5 + 0.5 ).r ), 0.0 );
+    float distance = proj_pos2.z - depth_bias;
+    if( shadow_distance < distance ) return 1.0;
+    else return 0.0;
+  }
+  else {
+    float shadow_distance = max( ( texture( shadow3, proj_pos3.xy * 0.5 + 0.5 ).r ), 0.0 );
+    float distance = proj_pos3.z - depth_bias;
+    if( shadow_distance < distance ) return 1.0;
+    else return 0.0;
+  }
+}
+
+float shadow( vec4 pos0, vec4 pos1, vec4 pos2, vec4 pos3 ) {
+  vec4 proj_pos0 = pos0;
+  proj_pos0 /= proj_pos0.w;
+  vec4 proj_pos1 = pos1;
+  proj_pos1 /= proj_pos1.w;
+  vec4 proj_pos2 = pos2;
+  proj_pos2 /= proj_pos2.w;
+  vec4 proj_pos3 = pos3;
+  proj_pos3 /= proj_pos3.w;
   float bias = 0.001;
   if( dynamic_uniforms.shadow_mode == 0 ) {
-    return simple_shadow( proj_pos.xyz, bias );
+    return simple_shadow( proj_pos0.xyz, bias );
   }
   else if( dynamic_uniforms.shadow_mode == 1 ) {
-    return pcf( proj_pos.xyz, dynamic_uniforms.light_size, dynamic_uniforms.light_frustum_width, bias );
+    return pcf( proj_pos0.xyz, dynamic_uniforms.light_size, dynamic_uniforms.light_frustum_width, bias );
   }
   else if( dynamic_uniforms.shadow_mode == 2 ) {
-    return pcss( proj_pos.xyz, dynamic_uniforms.light_size, dynamic_uniforms.light_frustum_width, dynamic_uniforms.light_znear, bias );
+    return pcss( proj_pos0.xyz, dynamic_uniforms.light_size, dynamic_uniforms.light_frustum_width, dynamic_uniforms.light_z[ 0 ], bias );
   }
   else if( dynamic_uniforms.shadow_mode == 3 ) {
-    return vsm( proj_pos.xyz, dynamic_uniforms.light_size, dynamic_uniforms.light_frustum_width, dynamic_uniforms.light_znear, bias );
+    return vsm( proj_pos0.xyz, dynamic_uniforms.light_size, dynamic_uniforms.light_frustum_width, dynamic_uniforms.light_z[ 0 ], bias );
+  }
+  else if( dynamic_uniforms.shadow_mode == 4 ) {
+    float z = dynamic_uniforms.projection_matrix[3].z/(gl_FragCoord.z * 2.0 - 1.0 + dynamic_uniforms.projection_matrix[2].z);
+    return pssm( proj_pos0.xyz, proj_pos1.xyz, proj_pos2.xyz, proj_pos3.xyz, z, dynamic_uniforms.split_bias, bias );
   }
   else return 1.0;
 }

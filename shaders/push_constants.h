@@ -22,10 +22,10 @@ layout(binding = 7) uniform DynamicUniforms {
   vec4 eye_pos;
   vec4 light_pos;
   float light_energy;
-  float light_znear;
-  float light_zfar;
   float light_frustum_width;
   float light_size;
+  float split_bias;
   int shadow_mode;
+  float light_z[ 5 ];
 } dynamic_uniforms;
 

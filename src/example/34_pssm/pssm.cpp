@@ -268,7 +268,7 @@ int main( int argc, const char *argv[] ) {
       glm::perspective( 0.39959648408210363f, (float(framebuffers[ 4 ][ 0 ].width)/float(framebuffers[ 4 ][ 0 ].height)), vw::practical_split( 0, 4, znear, zfar, split_bias ), vw::practical_split( 1, 4, znear, zfar, split_bias ) ),
       glm::perspective( 0.39959648408210363f, (float(framebuffers[ 4 ][ 0 ].width)/float(framebuffers[ 4 ][ 0 ].height)), vw::practical_split( 1, 4, znear, zfar, split_bias ), vw::practical_split( 2, 4, znear, zfar, split_bias ) ),
       glm::perspective( 0.39959648408210363f, (float(framebuffers[ 4 ][ 0 ].width)/float(framebuffers[ 4 ][ 0 ].height)), vw::practical_split( 2, 4, znear, zfar, split_bias ), vw::practical_split( 3, 4, znear, zfar, split_bias ) ),
-      glm::perspective( 0.39959648408210363f, (float(framebuffers[ 4 ][ 0 ].width)/float(framebuffers[ 4 ][ 0 ].height)), vw::practical_split( 3, 4, znear, zfar, split_bias ), vw::practical_split( 3, 4, znear, zfar, split_bias ) ),
+      glm::perspective( 0.39959648408210363f, (float(framebuffers[ 4 ][ 0 ].width)/float(framebuffers[ 4 ][ 0 ].height)), vw::practical_split( 3, 4, znear, zfar, split_bias ), vw::practical_split( 4, 4, znear, zfar, split_bias ) ),
     };
     auto full_projection = glm::perspective( 0.39959648408210363f, (float(framebuffers[ 4 ][ 0 ].width)/float(framebuffers[ 4 ][ 0 ].height)), znear, zfar );
     auto camera_pos = center + glm::vec3{ 0.f, 0.f, 1.0f*scale };
@@ -380,11 +380,11 @@ int main( int argc, const char *argv[] ) {
             .set_eye_pos( glm::vec4( camera_pos, 1.0 ) )
             .set_light_pos( glm::vec4( light_pos, 1.0 ) )
             .set_light_energy( light_energy )
-            .set_light_znear( light_znear[ 3 ] )
-            .set_light_zfar( light_zfar[ 3 ] )
+            .emplace_light_z( std::array< float, 5u >{ light_znear[ 0 ], light_znear[ 1 ], light_znear[ 2 ], light_znear[ 3 ], light_zfar[ 3 ] } )
             .set_light_frustum_width( light_frustum_width[ 3 ] )
             .set_light_size( light_size )
-            .set_shadow_mode( 0 );
+            .set_split_bias( split_bias )
+            .set_shadow_mode( 4 );
           vw::transfer_buffer(
             context, 
             gcb,

@@ -99,10 +99,10 @@ namespace viewer {
     LIBSTAMP_SETTER( eye_pos )
     LIBSTAMP_SETTER( light_pos )
     LIBSTAMP_SETTER( light_energy )
-    LIBSTAMP_SETTER( light_znear )
-    LIBSTAMP_SETTER( light_zfar )
+    LIBSTAMP_SETTER( light_z )
     LIBSTAMP_SETTER( light_frustum_width )
     LIBSTAMP_SETTER( light_size )
+    LIBSTAMP_SETTER( split_bias )
     LIBSTAMP_SETTER( shadow_mode )
     glm::mat4 projection_matrix;
     glm::mat4 camera_matrix;
@@ -113,11 +113,11 @@ namespace viewer {
     glm::vec4 eye_pos;
     glm::vec4 light_pos;
     float light_energy;
-    float light_znear;
-    float light_zfar;
     float light_frustum_width;
     float light_size;
+    float split_bias;
     uint32_t shadow_mode;
+    std::array< float, 5u > light_z;
   };
   struct mesh_t {
     LIBSTAMP_SETTER( primitive )

@@ -368,13 +368,16 @@ int main( int argc, const char *argv[] ) {
           .set_projection_matrix( lhrh * ( light_space ? w*l*light_projection_matrix : projection[ 1 ] ) )
           .set_camera_matrix( light_space ? light_view_matrix : lookat )
           .set_light_vp_matrix0( lhrh*w*l*light_projection_matrix*light_view_matrix )
+          .set_light_vp_matrix1( lhrh*w*l*light_projection_matrix*light_view_matrix )
+          .set_light_vp_matrix2( lhrh*w*l*light_projection_matrix*light_view_matrix )
+          .set_light_vp_matrix3( lhrh*w*l*light_projection_matrix*light_view_matrix )
           .set_eye_pos( glm::vec4( camera_pos, 1.0 ) )
           .set_light_pos( glm::vec4( light_pos, 1.0 ) )
           .set_light_energy( light_energy )
-          .set_light_znear( light_znear )
-          .set_light_zfar( light_zfar )
+          .emplace_light_z( std::array< float, 5u >{ light_znear, light_zfar, light_zfar, light_zfar, light_zfar } )
           .set_light_frustum_width( light_frustum_width )
           .set_light_size( light_size )
+          .set_split_bias( 0.f )
           .set_shadow_mode( 0 );
         vw::transfer_buffer(
           context, 
